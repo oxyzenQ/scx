@@ -3265,6 +3265,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "scx_wolf"
+version = "1.0.17-wolf.1"
+dependencies = [
+ "anyhow",
+ "clap",
+ "crossbeam",
+ "ctrlc",
+ "libbpf-rs",
+ "log",
+ "scx_cargo",
+ "scx_stats",
+ "scx_stats_derive",
+ "scx_utils",
+ "serde",
+ "simplelog",
+]
+
+[[package]]
 name = "scxcash"
 version = "0.1.4"
 dependencies = [
