@@ -1,4 +1,5 @@
 name: install-deps
+description: Install build and test dependencies on GitHub-hosted runners
 
 runs:
   using: 'composite'
