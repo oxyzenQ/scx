@@ -8,19 +8,19 @@ TIMEOUT_SEC="$3"
 BPFTRACE_SCRIPTS="$4"
 KERNEL_HEADERS="$5"
 
-echo $PWD
+echo "$PWD"
 
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 for a in $(echo "$BPFTRACE_SCRIPTS" | tr ',' ' '); do
-   BPFTRACE_KERNEL_SOURCE=${KERNEL_HEADERS} bpftrace -o "$a.ci.log" $SCRIPT_DIR/$a &
+	BPFTRACE_KERNEL_SOURCE=${KERNEL_HEADERS} bpftrace -o "$a.ci.log" "$SCRIPT_DIR/$a" &
 done
 
-$STRESS_CMD > stress_cmd.ci.log 2>&1 &
+bash -lc "$STRESS_CMD" >stress_cmd.ci.log 2>&1 &
 
 STRESS_PID=$!
 
-timeout --foreground --preserve-status $TIMEOUT_SEC $SCHED_CMD > sched_output.ci.log 2>&1 &
+timeout --foreground --preserve-status "$TIMEOUT_SEC" bash -lc "$SCHED_CMD" >sched_output.ci.log 2>&1 &
 
 STATUS_PID=$!
 
@@ -32,12 +32,15 @@ wait $STRESS_PID || true
 
 sleep 10
 
-killall -w 10s $(jobs -p)
+mapfile -t pids < <(jobs -p)
+if ((${#pids[@]})); then
+	killall -w 10s "${pids[@]}"
+fi
 
 for a in $(echo "$BPFTRACE_SCRIPTS" | tr ',' ' '); do
-  echo "$a OUTPUT"
-  cat "$a.ci.log"
-  echo "$a OUTPUT DONE"
+	echo "$a OUTPUT"
+	cat "$a.ci.log"
+	echo "$a OUTPUT DONE"
 done
 
 echo "STRESS OUTPUT"

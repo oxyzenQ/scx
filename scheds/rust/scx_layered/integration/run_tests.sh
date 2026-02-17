@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 layered_bin=${1:-../../../../target/release/scx_layered}
-test_scripts=( "layer_node.bt" "layer_llc.bt" )
-test_configs=( "numa.json" "llc.json" )
+test_scripts=("layer_node.bt" "layer_llc.bt")
+test_configs=("numa.json" "llc.json")
 
 for i in "${!test_scripts[@]}"; do
 	test_script="${test_scripts[$i]}"
@@ -30,7 +30,7 @@ for i in "${!test_scripts[@]}"; do
 
 	if [ $test_exit -ne 0 ]; then
 		echo "test script ${test_script} failed: ${test_exit}"
-		exit $test_exit;
+		exit $test_exit
 	fi
 	echo "test script ${test_script} passed: ${test_exit}"
 done
