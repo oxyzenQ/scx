@@ -56,7 +56,6 @@ process the load balancer randomly selects two LLCs and compares the relative
 load. The LLC with the most load is chosen and the migration DSQ is attempted
 to be consumed. If that fails then the second migraiton DSQ is attempted.
 
-
 ## Use Cases
 
 `p2dq` can perform well in a variety of workloads including interactive workloads
@@ -74,21 +73,22 @@ task queueing.
 
 `p2dq` can work well as a gaming scheduler with some tuning. A list of relevant
 options for gaming:
- - `--deadline` adds deadline scaling of timeslices.
- - `--task-slice` creates more stable slice durations for better consistency.
+
+- `--deadline` adds deadline scaling of timeslices.
+- `--task-slice` creates more stable slice durations for better consistency.
    Overrides other slice scaling methods.
- - `--autoslice` auto scaling of interactive slice duration based on
+- `--autoslice` auto scaling of interactive slice duration based on
    utilization of interactive tasks.
- - `--freq-control` for controlling CPU frequency with certain drivers.
- - `--cpu-priority` uses a min-heap to schedule on CPUs based on a score of
+- `--freq-control` for controlling CPU frequency with certain drivers.
+- `--cpu-priority` uses a min-heap to schedule on CPUs based on a score of
    most recently used and preferred core value. **Requires kernel support for
    `sched_core_priority` symbol** - typically available on systems with hybrid
    CPU architectures (e.g., Intel Alder Lake P/E-cores, AMD with preferred cores)
    when using appropriate CPU frequency governors (e.g., `amd-pstate`, Intel HWP).
    The scheduler will automatically disable this feature and warn if kernel support
    is unavailable.
- - `--sched-mode` can use the performance mode to schedule on Big cores.
- - `--idle-resume-us` how long a CPU stays idle before dropping to a lower C-state.
+- `--sched-mode` can use the performance mode to schedule on Big cores.
+- `--idle-resume-us` how long a CPU stays idle before dropping to a lower C-state.
 
 ### Big/Little Support
 

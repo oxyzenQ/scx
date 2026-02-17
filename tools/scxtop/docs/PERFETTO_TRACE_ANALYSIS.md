@@ -53,11 +53,13 @@ find_scheduling_bottlenecks({ trace_id: "my_trace", limit: 10 })
 Analyzes per-CPU utilization including active/idle time and context switch statistics.
 
 **Returns:**
+
 - Utilization percentage per CPU
 - Total context switches
 - Timeslice percentiles (min, avg, p50, p95, p99, max)
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -67,6 +69,7 @@ analyze_trace_scheduling({
 ```
 
 **Output includes:**
+
 ```json
 {
   "cpu_id": 0,
@@ -88,12 +91,14 @@ analyze_trace_scheduling({
 Analyzes total runtime, CPU time percentage, and timeslice distributions for all processes.
 
 **Returns:**
+
 - Total runtime per process
 - CPU time percentage
 - Number of context switches
 - Timeslice percentiles
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -105,6 +110,7 @@ analyze_trace_scheduling({
 ```
 
 **Output includes:**
+
 ```json
 {
   "pid": 2199,
@@ -124,11 +130,13 @@ analyze_trace_scheduling({
 Analyzes latency between wakeup and actual scheduling for all tasks.
 
 **Returns:**
+
 - Overall wakeup latency percentiles (min, avg, p50, p95, p99, p999, max)
 - Per-CPU breakdown
 - Total wakeup count
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -137,6 +145,7 @@ analyze_trace_scheduling({
 ```
 
 **Output includes:**
+
 ```json
 {
   "total_wakeups": 53704,
@@ -163,12 +172,14 @@ analyze_trace_scheduling({
 Detects process migration across CPUs, including cross-NUMA and cross-LLC migrations.
 
 **Returns:**
+
 - Total migrations
 - Per-process migration counts
 - Cross-NUMA and cross-LLC migration counts
 - Migration latency percentiles
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -181,11 +192,13 @@ analyze_trace_scheduling({
 For traces captured with sched_ext schedulers, analyzes dispatch queue usage.
 
 **Returns:**
+
 - Scheduler name
 - All DSQ IDs in the trace
 - Per-DSQ descriptors with time ranges
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -194,6 +207,7 @@ analyze_trace_scheduling({
 ```
 
 **Output includes:**
+
 ```json
 {
   "scheduler_name": "scx_rusty",
@@ -209,11 +223,13 @@ analyze_trace_scheduling({
 Analyzes time spent in different task states (RUNNING, RUNNABLE, SLEEPING, BLOCKED) and scheduler latency.
 
 **Returns:**
+
 - Time in each state with percentages
 - Voluntary vs involuntary context switches
 - Scheduler latency (time waiting when runnable) with percentiles
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -224,6 +240,7 @@ analyze_trace_scheduling({
 ```
 
 **Output includes:**
+
 ```json
 {
   "pid": 2952187,
@@ -252,10 +269,12 @@ analyze_trace_scheduling({
 Identifies which tasks are being preempted and by whom.
 
 **Returns:**
+
 - Preemption count per process
 - Top preemptors (who preempted this task)
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -265,6 +284,7 @@ analyze_trace_scheduling({
 ```
 
 **Output includes:**
+
 ```json
 {
   "pid": 2952187,
@@ -282,11 +302,13 @@ analyze_trace_scheduling({
 Identifies cascading wakeup chains (A wakes B, B wakes C...) to find critical paths.
 
 **Returns:**
+
 - Wakeup chains with criticality scores
 - Chain length and total latency
 - Individual wakeup events in chain
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -296,6 +318,7 @@ analyze_trace_scheduling({
 ```
 
 **Output includes:**
+
 ```json
 {
   "chain_length": 11,
@@ -312,11 +335,13 @@ analyze_trace_scheduling({
 Breaks down wakeup latency into stages: waking→wakeup (wakeup path) and wakeup→schedule (runqueue wait).
 
 **Returns:**
+
 - Waking→wakeup latency percentiles
 - Wakeup→schedule latency percentiles
 - Percentage attribution
 
 **Example:**
+
 ```javascript
 analyze_trace_scheduling({
   trace_id: "my_trace",
@@ -325,6 +350,7 @@ analyze_trace_scheduling({
 ```
 
 **Output includes:**
+
 ```json
 {
   "waking_to_wakeup": {
@@ -364,6 +390,7 @@ get_process_timeline({
 ```
 
 **Returns:**
+
 - Scheduled events (when task runs)
 - Preempted events (when task is descheduled)
 - Woken events (when task is woken by another task)
@@ -384,6 +411,7 @@ get_cpu_timeline({
 ```
 
 **Returns:**
+
 - All context switches with prev/next PIDs and comm names
 - Softirq entry/exit events
 
@@ -400,6 +428,7 @@ correlate_wakeup_to_schedule({
 ```
 
 **Returns:**
+
 - Waker PID and wakee PID
 - Wakeup timestamp and schedule timestamp
 - Precise wakeup latency
@@ -407,6 +436,7 @@ correlate_wakeup_to_schedule({
 - Full percentile statistics (min/p50/p95/p99/p999/max)
 
 **Output shows:**
+
 ```json
 {
   "pid": 2952187,
@@ -430,6 +460,7 @@ find_scheduling_bottlenecks({
 ```
 
 **Detects:**
+
 1. **High context switch rates** (>1000 Hz per CPU)
 2. **Long wakeup latencies** (p99 > 100ms)
 3. **Excessive migrations** (>100 migrations/sec)
@@ -437,6 +468,7 @@ find_scheduling_bottlenecks({
 **Returns:** Bottlenecks sorted by severity with descriptions and affected time ranges.
 
 **Example output:**
+
 ```json
 {
   "description": "High migration rate: 30547 migrations/sec",
@@ -459,6 +491,7 @@ export_trace_analysis({
 ```
 
 **Exports:**
+
 - CPU utilization for all CPUs
 - Top 20 processes by runtime
 - Wakeup latency distribution
@@ -532,21 +565,25 @@ High p95/p99/p999 values compared to median indicate latency spikes or bottlenec
 ## Interpreting Results
 
 ### High CPU Utilization (>95%)
+
 - System is heavily loaded
 - May indicate CPU-bound workload
 - Check process runtime to identify top consumers
 
 ### Long Wakeup Latencies (p99 > 10ms)
+
 - Tasks waiting too long after being woken
 - May indicate scheduler inefficiency or overloaded system
 - Use correlation analysis to identify which tasks are affected
 
 ### Excessive Migrations (>100/sec system-wide)
+
 - Tasks bouncing between CPUs frequently
 - Can hurt cache performance
 - Check if load balancing is too aggressive
 
 ### High Context Switch Rate (>1000 Hz per CPU)
+
 - CPU is thrashing between tasks
 - May indicate too many runnable tasks
 - Could be voluntary yields or preemption
@@ -623,26 +660,32 @@ export_trace_analysis({
 ## Troubleshooting
 
 ### "Trace not found" Error
+
 Make sure you've loaded the trace with `load_perfetto_trace` first.
 
 ### "Not a sched_ext trace" for DSQ Analysis
+
 DSQ analysis requires traces captured while a sched_ext scheduler is running. Check with `analyze_trace_scheduling` using `dsq_summary`.
 
 ### Slow Trace Loading (>60s)
+
 This is normal for large traces (40MB+). Loading is single-threaded. Once loaded, analysis is fast.
 
 ### Out of Memory
+
 Large traces (>100MB) may consume significant memory. Close other applications or use a machine with more RAM.
 
 ## Technical Details
 
 ### Trace Format
+
 - Binary protobuf format (`.proto` extension)
 - Based on perfetto trace packet specification
 - Contains ftrace events, process/thread descriptors, system stats
 - Timestamps in nanoseconds (CLOCK_BOOTTIME)
 
 ### Event Types Parsed
+
 - `sched_switch` - Context switches
 - `sched_wakeup` / `sched_waking` - Task wakeups
 - `sched_migrate_task` - Process migration
@@ -651,12 +694,14 @@ Large traces (>100MB) may consume significant memory. Close other applications o
 - **sched_ext specific**: DSQ latency and depth as TrackEvent counters
 
 ### Multi-Threading
+
 Analysis functions with `use_parallel: true` use the `rayon` crate to process CPUs in parallel. This provides 1.5-2x speedup on multi-core systems.
 
 ### Memory Usage
+
 A 40MB trace file expands to approximately 200MB in memory after parsing and indexing. Traces are cached, so loading the same trace multiple times reuses the cached version.
 
 ## See Also
 
-- Perfetto UI for visualization: https://ui.perfetto.dev
-- MCP protocol specification: https://modelcontextprotocol.io
+- Perfetto UI for visualization: <https://ui.perfetto.dev>
+- MCP protocol specification: <https://modelcontextprotocol.io>

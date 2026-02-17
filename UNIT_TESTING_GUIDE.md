@@ -3,7 +3,7 @@
 ## Introduction
 
 This is a guide to lay out how to approach the unit testing of the BPF side of
-the `sched_ext` schedulers.  The user space components of the schedulers utilize
+the `sched_ext` schedulers. The user space components of the schedulers utilize
 the same patterns as their respective language's unit testing framework.
 
 ## How do I run the existing tests
@@ -44,16 +44,16 @@ run their unittests in the one crate.
 ## Stubbing out BPF and kernel functions
 
 BPF programs are a rare beast, and thus creating stub functions for them is
-tricky.  There are a few things that need to be kept in mind.
+tricky. There are a few things that need to be kept in mind.
 
 1. *Try not to modify the actual scheduler to fit the test*. This may not be
    tenable in all cases, but this is a good rule of thumb. We want to keep the
    core scheduler code as pristine as possible.
 
 2. *A lot of helpers are weak references, this will cause crashes if you miss
-   one*.  `libbpf` provides weak references to the BPF helpers, because the
+   one*. `libbpf` provides weak references to the BPF helpers, because the
    compiler knows what to do when it's building a BPF binary. But in userspace
-   we need the actual symbol.  Sometimes you will get a `SIGSEGV` and `gdb` will
+   we need the actual symbol. Sometimes you will get a `SIGSEGV` and `gdb` will
    resolve the symbol to `???`. This is an indication you missed a function that
    is required for your test, simply look at the frame before it to find out
    which function is missing.
@@ -61,18 +61,18 @@ tricky.  There are a few things that need to be kept in mind.
 3. *You must #define to override most BPF helpers*. This is because the BPF and
    the `libbpf` helpers are often named the same thing, but the `libbpf`
    versions interact with the kernel interface, they do not provide a userspace
-   implementation of that functionality.  Look at
+   implementation of that functionality. Look at
    [lib/scxtest/scx_test_map.h](lib/scxtest/scx_test_map.h) for an example of
    what this looks like.
 
 4. *Some of the helpers are static functions*. This is the case for
    `bpf_get_prandom_u32()`, you cannot simply create a stub for this to override
-   the behavior like you can with some helpers.  In this case you must override
+   the behavior like you can with some helpers. In this case you must override
    them with a `#define`.
 
 5. *The rest of the BPF helpers can simply be stubbed out*. Look at
    [lib/scxtest/overrides.c](lib/scxtest/overrides.c) for an examples of these
-   functions.  If you require a real implementation for these helpers simply
+   functions. If you require a real implementation for these helpers simply
    provide it alongside your test.
 
 ## Outstanding items

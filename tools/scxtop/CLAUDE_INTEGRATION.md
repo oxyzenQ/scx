@@ -65,13 +65,15 @@ claude --mcp scxtop "Show me the current scheduler"
 **Claude:** I'll use the `summarize_system` prompt to get a comprehensive overview.
 
 *Claude invokes the prompt and follows the workflow, reading resources:*
+
 - `topology://info` - Gets hardware layout
 - `scheduler://current` - Identifies active scheduler
 - `stats://aggregated/cpu` - CPU utilization
 - `stats://aggregated/process` - Top processes
 
 **Response:**
-```
+
+```text
 System Summary:
 - Hardware: 16 CPUs (8 cores), 2 LLCs, 1 NUMA node, SMT enabled
 - Active Scheduler: scx_rusty (sched_ext)
@@ -88,13 +90,15 @@ System Summary:
 **Claude:** I'll use the `debug_high_latency` prompt for PID 5678.
 
 *Claude follows the debugging workflow:*
+
 1. Reads `scheduler://current` to confirm sched_ext is active
 2. Queries `stats://aggregated/process` filtered for PID 5678
 3. Checks `stats://aggregated/cpu` for bottleneck CPUs
 4. Uses `get_topology` tool to understand CPU layout
 
 **Response:**
-```
+
+```text
 Latency Analysis for PID 5678:
 
 Problem Found:
@@ -125,7 +129,8 @@ Recommendations:
 *Claude subscribes to `events://stream` resource in daemon mode*
 
 **Claude observes and reports:**
-```
+
+```text
 Real-time Monitoring Active...
 
 [10:30:42] Normal: ~450 sched_switch events/sec, latencies < 100μs
@@ -151,13 +156,15 @@ Real-time Monitoring Active...
 **Claude:** I'll use the `analyze_scheduler_performance` prompt with focus on throughput.
 
 *Claude uses the tools to gather data:*
+
 - `query_stats` to discover available metrics
 - Reads `stats://aggregated/llc` for cache efficiency
 - Reads `stats://scheduler/raw` for scheduler-specific config
 - Uses `get_topology` with full detail for NUMA layout
 
 **Response:**
-```
+
+```text
 Throughput Optimization Analysis:
 
 Current State:
@@ -196,12 +203,14 @@ Expected Gains:
 **Claude:** Let me analyze the NUMA distribution.
 
 *Claude queries:*
+
 - `stats://aggregated/node` for per-node metrics
 - `get_topology` for NUMA topology details
 - `stats://aggregated/process` to see process placement
 
 **Response:**
-```
+
+```text
 NUMA Node Analysis:
 
 Node 0:
@@ -236,12 +245,14 @@ Recommendations:
 **Claude:** I'll start perf profiling to collect stack traces.
 
 *Claude uses the tools:*
+
 - `start_perf_profiling` with freq=99, duration_secs=10
 - Waits for collection to complete
 - Uses `get_perf_results` to retrieve symbolized stack traces
 
 **Response:**
-```
+
+```text
 Perf Profiling Results (99 Hz for 10 seconds):
 
 Top Functions by CPU Time:
@@ -286,7 +297,8 @@ Recommendations:
 **You:** "Show me the kernel stack trace for the schedule function"
 
 **Claude:** Here's the detailed stack trace:
-```
+
+```text
 schedule (kernel)
 ├─ do_nanosleep (42% of samples)
 │  ├─ hrtimer_nanosleep
@@ -316,6 +328,7 @@ Most common paths show normal blocking patterns - no issues detected.
 ## Available Prompts
 
 You can ask Claude to:
+
 - **"Analyze my scheduler's performance"** → General performance analysis
 - **"Debug high latency for process X"** → Latency investigation
 - **"Analyze CPU load imbalance"** → Load balancing analysis
@@ -328,7 +341,8 @@ You can ask Claude to:
 The MCP server exposes available perf events and kprobe functions:
 
 **Query available profiling events:**
-```
+
+```text
 "What perf events are available on this system?"
 → Claude reads: events://perf
 
@@ -346,7 +360,8 @@ The MCP server exposes available perf events and kprobe functions:
 ## Advanced Queries
 
 **Query specific statistics:**
-```
+
+```text
 "Show me per-CPU dispatch queue latencies"
 → Claude reads: stats://aggregated/dsq
 
@@ -358,14 +373,16 @@ The MCP server exposes available perf events and kprobe functions:
 ```
 
 **Combine multiple data sources:**
-```
+
+```text
 "Find processes with high scheduling latency and correlate with CPU placement"
 → Claude reads: stats://aggregated/process, stats://aggregated/cpu
 → Claude calls: get_topology to understand CPU relationships
 ```
 
 **Time-based analysis (daemon mode):**
-```
+
+```text
 "Monitor for the next 60 seconds and tell me if you see any anomalies"
 → Claude subscribes: events://stream
 → Processes real-time sched_switch, wakeup, migration events
@@ -385,6 +402,7 @@ The MCP server exposes available perf events and kprobe functions:
 Claude Code provides a CLI for direct interaction with the MCP server:
 
 **Quick queries:**
+
 ```bash
 # System overview
 claude --mcp scxtop "Summarize my system's scheduler and hardware"
@@ -400,6 +418,7 @@ claude --mcp scxtop "Debug high scheduling latency issues"
 ```
 
 **Interactive session:**
+
 ```bash
 # Start an interactive session with scxtop MCP available
 claude --mcp scxtop
@@ -412,6 +431,7 @@ claude --mcp scxtop
 ```
 
 **Using prompts directly:**
+
 ```bash
 # Invoke a specific workflow prompt
 claude --mcp scxtop --prompt summarize_system
@@ -422,6 +442,7 @@ claude --mcp scxtop --prompt analyze_scheduler_performance --arg focus_area=late
 ```
 
 **Combining with code tasks:**
+
 ```bash
 # Analyze scheduler and suggest kernel config changes
 claude --mcp scxtop "Analyze my scheduler performance and suggest \

@@ -1,10 +1,15 @@
 # scxtop MCP Server - Complete Integration Reference
 
-This document provides a comprehensive overview of all MCP (Model Context Protocol) integrations available in the scxtop MCP server.
+This document provides a comprehensive overview of all MCP (Model Context
+Protocol) integrations available in the scxtop MCP server.
 
 ## Overview
 
-The scxtop MCP server provides AI assistants with programmatic access to Linux scheduler metrics, BPF events, hardware topology, and performance profiling capabilities. It implements the MCP specification (protocol version 2024-11-05) and supports both one-shot queries and daemon mode with real-time event streaming.
+The scxtop MCP server provides AI assistants with programmatic access to Linux
+scheduler metrics, BPF events, hardware topology, and performance profiling
+capabilities. It implements the MCP specification (protocol version
+2024-11-05) and supports both one-shot queries and daemon mode with real-time
+event streaming.
 
 ## Server Information
 
@@ -19,7 +24,8 @@ The scxtop MCP server provides AI assistants with programmatic access to Linux s
 
 ### 1. Resources (17 URIs)
 
-Resources are read-only data endpoints that provide access to system metrics and configuration.
+Resources are read-only data endpoints that provide access to system metrics and
+configuration.
 
 #### Scheduler Resources
 
@@ -70,7 +76,9 @@ Resources are read-only data endpoints that provide access to system metrics and
 | `events://stream` | Real-time stream of BPF scheduler events (requires daemon mode and subscription) | NDJSON |
 
 **Supported Event Types** (when subscribed to `events://stream`):
-- Scheduling: `sched_switch`, `sched_wakeup`, `sched_waking`, `sched_wakeup_new`, `sched_migrate_task`
+
+- Scheduling: `sched_switch`, `sched_wakeup`, `sched_waking`,
+  `sched_wakeup_new`, `sched_migrate_task`
 - Process lifecycle: `fork`, `exec`, `exit`, `wait`
 - System events: `softirq`, `ipi`, `cpuhp_enter`, `cpuhp_exit`, `hw_pressure`
 - Profiling: `kprobe`, `perf_sample`
@@ -86,7 +94,9 @@ Tools are callable functions that perform queries or actions.
 Discover available statistics resources and how to query them.
 
 **Parameters**:
-- `stat_type` (optional): Filter by type: `cpu`, `llc`, `node`, `dsq`, `process`, `scheduler`, `system`
+
+- `stat_type` (optional): Filter by type: `cpu`, `llc`, `node`, `dsq`,
+  `process`, `scheduler`, `system`
 
 **Returns**: List of available resource URIs with descriptions and usage examples.
 
@@ -95,9 +105,11 @@ Discover available statistics resources and how to query them.
 Get detailed hardware topology with core/LLC/node mappings.
 
 **Parameters**:
+
 - `detail_level` (optional, default: `summary`): `summary` or `full`
   - `summary`: High-level counts and SMT status
-  - `full`: Complete per-CPU, per-core, per-LLC, per-node details with frequencies and capacities
+  - `full`: Complete per-CPU, per-core, per-LLC, per-node details with
+    frequencies and capacities
 - `include_offline` (optional, default: `false`): Include offline CPUs
 
 **Returns**: JSON object with topology information based on detail level.
@@ -107,12 +119,16 @@ Get detailed hardware topology with core/LLC/node mappings.
 List available profiling events filtered by subsystem.
 
 **Parameters**:
-- `subsystem` (**required**): Filter perf events by subsystem (e.g., `sched`, `irq`, `power`, `block`, `net`)
+
+- `subsystem` (**required**): Filter perf events by subsystem (e.g., `sched`,
+  `irq`, `power`, `block`, `net`)
 - `event_type` (optional, default: `perf`): `kprobe`, `perf`, or `all`
 
-**Returns**: JSON object with filtered events, count, and subsystem information. On error, lists available subsystems.
+**Returns**: JSON object with filtered events, count, and subsystem
+information. On error, lists available subsystems.
 
 **Example**:
+
 ```json
 {
   "subsystem": "sched",
@@ -125,19 +141,23 @@ List available profiling events filtered by subsystem.
 Start perf profiling with stack trace collection and symbolization.
 
 **Parameters**:
+
 - `event` (optional, default: `hw:cpu-clock`): Event to profile
   - Hardware events: `hw:cpu-clock`
   - Software events: `sw:task-clock`
   - Tracepoints: `tracepoint:subsystem:event` (e.g., `tracepoint:sched:sched_switch`)
 - `freq` (optional, default: `99`): Sampling frequency in Hz
-- `cpu` (optional, default: `-1`): CPU to profile (-1 for all CPUs, specific CPU ID otherwise)
+- `cpu` (optional, default: `-1`): CPU to profile (-1 for all CPUs, specific
+  CPU ID otherwise)
 - `pid` (optional, default: `-1`): Process ID to profile (-1 for system-wide)
-- `max_samples` (optional, default: `10000`): Maximum samples to collect (0 for unlimited)
+- `max_samples` (optional, default: `10000`): Maximum samples to collect (0 for
+  unlimited)
 - `duration_secs` (optional, default: `0`): Duration in seconds (0 for manual stop)
 
 **Returns**: Confirmation with profiling configuration.
 
 **Example**:
+
 ```json
 {
   "event": "hw:cpu-clock",
@@ -160,16 +180,19 @@ Stop perf profiling and prepare results for retrieval.
 Retrieve symbolized stack traces and top functions from perf profiling.
 
 **Parameters**:
+
 - `limit` (optional, default: `50`): Number of top symbols to return
 - `include_stacks` (optional, default: `true`): Include full symbolized stack traces
 
 **Returns**: JSON object with:
+
 - Top symbols ranked by sample count with percentages
 - Symbolized stack traces (if `include_stacks` is true)
 - Kernel and userspace function names
 - Sample statistics
 
 **Example**:
+
 ```json
 {
   "limit": 20,
@@ -186,22 +209,27 @@ Prompts are pre-defined analysis workflows that guide the AI through complex inv
 Comprehensive scheduler performance analysis workflow.
 
 **Arguments**:
+
 - `focus_area` (optional): `latency`, `throughput`, `balance`, or `general`
   - `latency`: Focus on dispatch queue latencies, wakeup delays
   - `throughput`: Focus on context switch rates, CPU utilization, migration patterns
   - `balance`: Focus on load distribution across CPUs, LLCs, NUMA nodes
   - `general`: Comprehensive overview of all aspects
 
-**Returns**: Detailed workflow instructions for analyzing scheduler performance based on focus area.
+**Returns**: Detailed workflow instructions for analyzing scheduler performance
+based on focus area.
 
 #### `debug_high_latency`
 
 Debug high scheduling latency issues with step-by-step investigation.
 
 **Arguments**:
-- `pid` (optional): Process ID to investigate (if not specified, system-wide analysis)
 
-**Returns**: Workflow for identifying latency bottlenecks, analyzing wakeup patterns, checking hardware factors, and suggesting remediation.
+- `pid` (optional): Process ID to investigate (if not specified, system-wide
+  analysis)
+
+**Returns**: Workflow for identifying latency bottlenecks, analyzing wakeup
+patterns, checking hardware factors, and suggesting remediation.
 
 #### `analyze_cpu_imbalance`
 
@@ -209,16 +237,22 @@ Analyze CPU load imbalance and migration patterns.
 
 **Arguments**: None
 
-**Returns**: Workflow for measuring imbalance severity, understanding topology, identifying migration patterns, analyzing task characteristics, and determining root causes.
+**Returns**: Workflow for measuring imbalance severity, understanding topology,
+identifying migration patterns, analyzing task characteristics, and determining
+root causes.
 
 #### `investigate_scheduler_behavior`
 
 Deep dive into scheduler behavior and policies.
 
 **Arguments**:
-- `scheduler_name` (optional): Specific scheduler to analyze (e.g., `scx_rusty`, `scx_lavd`)
 
-**Returns**: Workflow for examining dispatch queue behavior, monitoring scheduling decisions, analyzing task placement patterns, and comparing against expected behavior.
+- `scheduler_name` (optional): Specific scheduler to analyze (e.g.,
+  `scx_rusty`, `scx_lavd`)
+
+**Returns**: Workflow for examining dispatch queue behavior, monitoring
+scheduling decisions, analyzing task placement patterns, and comparing against
+expected behavior.
 
 #### `summarize_system`
 
@@ -226,7 +260,9 @@ Comprehensive system and scheduler summary.
 
 **Arguments**: None
 
-**Returns**: Workflow for gathering complete system overview including hardware topology, active scheduler, system-wide statistics, resource distribution, top processes, and available monitoring capabilities.
+**Returns**: Workflow for gathering complete system overview including hardware
+topology, active scheduler, system-wide statistics, resource distribution, top
+processes, and available monitoring capabilities.
 
 ## Usage Examples
 
@@ -248,25 +284,29 @@ Add to `claude_desktop_config.json`:
 ### Query Examples
 
 **Basic resource read**:
-```
+
+```text
 "What scheduler is currently running?"
 → Claude reads: scheduler://current
 ```
 
 **Using tools**:
-```
+
+```text
 "Show me the hardware topology"
 → Claude calls: get_topology with detail_level="full"
 ```
 
 **Using prompts**:
-```
+
+```text
 "Analyze scheduler latency issues"
 → Claude invokes: analyze_scheduler_performance prompt with focus_area="latency"
 ```
 
 **Profiling workflow**:
-```
+
+```text
 "Profile the system and show me the hottest kernel functions"
 → Claude calls: start_perf_profiling with event="hw:cpu-clock", freq=99
 → (waits or sets duration)
@@ -276,7 +316,8 @@ Add to `claude_desktop_config.json`:
 ```
 
 **Event monitoring (daemon mode)**:
-```
+
+```text
 "Monitor scheduling events and alert me if you see high latency"
 → Claude subscribes to: events://stream
 → Claude filters sched_switch events for dsq_lat_us > 1000
@@ -298,7 +339,8 @@ Add to `claude_desktop_config.json`:
 
 ### Resource Handler Registration
 
-Resources are registered with closures that capture necessary state (e.g., topology, BPF stats collector):
+Resources are registered with closures that capture necessary state (e.g.,
+topology, BPF stats collector):
 
 ```rust
 self.resources.register_handler("topology://info".to_string(), move || {
@@ -320,18 +362,22 @@ self.resources.register_handler("topology://info".to_string(), move || {
 ## Daemon Mode vs One-Shot Mode
 
 ### One-Shot Mode
+
 ```bash
 scxtop --mcp
 ```
+
 - Processes one MCP request cycle
 - No event streaming
 - Exits after initialize + first request
 - Suitable for CLI usage with Claude Code
 
 ### Daemon Mode
+
 ```bash
 scxtop --mcp-daemon
 ```
+
 - Runs continuously
 - Enables `events://stream` resource
 - Real-time BPF event streaming
@@ -368,6 +414,7 @@ The MCP server integrates with scxtop's existing statistics infrastructure:
 ## Future Enhancements
 
 Potential areas for expansion:
+
 - Additional resource types (disk I/O, interrupts)
 - More granular event filtering
 - Historical data retention and querying
@@ -377,6 +424,6 @@ Potential areas for expansion:
 
 ## References
 
-- MCP Specification: https://spec.modelcontextprotocol.io/
+- MCP Specification: <https://spec.modelcontextprotocol.io/>
 - scxtop documentation: README.md, CLAUDE_INTEGRATION.md
-- sched_ext documentation: https://github.com/sched-ext/scx
+- sched_ext documentation: <https://github.com/sched-ext/scx>

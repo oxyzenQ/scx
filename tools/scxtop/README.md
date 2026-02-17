@@ -4,23 +4,28 @@
 It collects and aggregates system performance metrics and scheduler events via BPF.
 
 **Three modes of operation:**
-- **TUI Mode** (default): Interactive terminal UI with live metrics across CPUs, LLCs, and NUMA nodes
+
+- **TUI Mode** (default): Interactive terminal UI with live metrics across CPUs,
+  LLCs, and NUMA nodes
 - **Trace Mode**: Generate Perfetto-compatible traces for detailed offline analysis
 - **MCP Mode**: Model Context Protocol server for AI-assisted scheduler analysis
 
 ## Quick Start
 
 ### Interactive TUI
+
 ```bash
 sudo scxtop
 ```
 
 ### Generate Perfetto Trace
+
 ```bash
 sudo scxtop trace --duration 30
 ```
 
 ### MCP Server for AI Integration
+
 ```bash
 sudo scxtop mcp --daemon
 ```
@@ -34,14 +39,14 @@ See [CLAUDE_INTEGRATION.md](CLAUDE_INTEGRATION.md) for AI assistant setup.
 `scxtop` must be run as root or with capabilities as it uses `perf_event_open`
 as well as BPF programs for data collection. Use the help menu (`h` key is the
 default to see keybindings) to view the current keybindings:
-<img width="1919" alt="image" src="https://github.com/user-attachments/assets/38d11e5d-edb7-4567-b62f-da223a47efd9" />
+![scxtop](https://github.com/user-attachments/assets/38d11e5d-edb7-4567-b62f-da223a47efd9)
 
 `scxtop` has multiple views for presenting aggregated data. The bar chart view
 displays live value bar charts:
-<img width="1919" alt="image" src="https://github.com/user-attachments/assets/8b3a806c-64d4-4f9e-a07d-9321c94cfbb9" />
+![scxtop](https://github.com/user-attachments/assets/8b3a806c-64d4-4f9e-a07d-9321c94cfbb9)
 
 The sparkline view is useful for seeing a historical view of the metrics:
-<img width="1919" alt="image" src="https://github.com/user-attachments/assets/83238b44-5580-4587-a370-b2f9a68d925a" />
+![scxtop](https://github.com/user-attachments/assets/83238b44-5580-4587-a370-b2f9a68d925a)
 
 ### Configuration
 
@@ -51,7 +56,7 @@ in the default keymap configuration. The config file follows the
 
 An example configuration shows customization of default tick rates, theme and keymaps:
 
-```
+```text
 theme = "IAmBlue"
 tick_rate_ms = 250
 debug = false
@@ -95,12 +100,13 @@ x = "ClearEvent"
 `scxtop` is able to generate shell completions for various shells using the
 `scxtop generate-completions` subcommand:
 
-```
+```text
 scxtop generate-completions -h
 Usage: scxtop generate-completions [OPTIONS]
 
 Options:
-  -s, --shell <SHELL>    The shell type [default: bash] [possible values: bash, elvish, fish, powershell, zsh]
+  -s, --shell <SHELL>    The shell type [default: bash]
+                         [possible values: bash, elvish, fish, powershell, zsh]
       --output <OUTPUT>  Output file, stdout if not present
   -h, --help             Print help
 ```
@@ -109,6 +115,7 @@ Options:
 
 `scxtop` can generate [Perfetto](https://perfetto.dev/) compatible traces for detailed
 offline analysis. The trace data includes:
+
 - Scheduler events (sched_switch, wakeups, migrations)
 - DSQ (dispatch queue) data for active `sched_ext` schedulers
 - Soft IRQ events
@@ -119,6 +126,7 @@ Traces can be collected via the `scxtop trace` subcommand or triggered from keyb
 within the TUI (default: `P`, `a`, or `w` keys).
 
 **Command line usage:**
+
 ```bash
 # Trace for 30 seconds
 sudo scxtop trace --duration 30
@@ -127,15 +135,18 @@ sudo scxtop trace --duration 30
 sudo scxtop trace --duration 60 --output scheduler-trace.proto
 ```
 
-**View traces at:** https://ui.perfetto.dev/
+**View traces at:** <https://ui.perfetto.dev/>
 
 ![scxtop](https://github.com/user-attachments/assets/1be4ace4-e153-48ad-b63e-16f2b4e4c756)
 
 ### Analyzing Perfetto Traces (MCP Mode)
 
-`scxtop` can also **analyze** perfetto trace files through its MCP server interface, providing detailed scheduling analysis and bottleneck detection with comprehensive percentile statistics.
+`scxtop` can also **analyze** perfetto trace files through its MCP server
+interface, providing detailed scheduling analysis and bottleneck detection with
+comprehensive percentile statistics.
 
 **Key Features:**
+
 - Query scheduling events with flexible filtering (time range, CPU, PID, event type)
 - Analyze CPU utilization and process runtime with percentile breakdowns
 - Measure wakeup latency distributions (p50/p95/p99/p999)
@@ -146,6 +157,7 @@ sudo scxtop trace --duration 60 --output scheduler-trace.proto
 - Export comprehensive analysis to JSON
 
 **Quick Example:**
+
 ```bash
 # 1. Generate trace
 sudo scxtop trace -d 5000 -o trace.proto -s
@@ -161,7 +173,8 @@ sudo scxtop mcp --daemon
 
 **Performance:** Analyzes 40MB traces with 700K+ events in ~500ms (multi-threaded).
 
-See **[docs/PERFETTO_TRACE_ANALYSIS.md](docs/PERFETTO_TRACE_ANALYSIS.md)** for complete documentation and examples.
+See **[docs/PERFETTO_TRACE_ANALYSIS.md](docs/PERFETTO_TRACE_ANALYSIS.md)** for
+complete documentation and examples.
 
 For task/thread-level debugging, see **[docs/TASK_THREAD_DEBUGGING_GUIDE.md](docs/TASK_THREAD_DEBUGGING_GUIDE.md)**.
 
@@ -169,42 +182,46 @@ For task/thread-level debugging, see **[docs/TASK_THREAD_DEBUGGING_GUIDE.md](doc
 
 `scxtop` can be used to observe scheduling decisions across hardware boundaries
 by using the LLC aggregated view:
-<img width="1919" alt="image" src="https://github.com/user-attachments/assets/f7b867d8-7afa-4f69-a64a-584859919795" />
+![scxtop](https://github.com/user-attachments/assets/f7b867d8-7afa-4f69-a64a-584859919795)
 For systems with multiple NUMA nodes aggregations can also be done at the NUMA
 level:
-<img width="1919" alt="image" src="https://github.com/user-attachments/assets/32b6b27d-d7fa-4893-890d-84070caf3497" />
+![scxtop](https://github.com/user-attachments/assets/32b6b27d-d7fa-4893-890d-84070caf3497)
 
 ### Scheduler Stats
 
 The scheduler view displays scheduler related stats. For schedulers that use
 [`scx_stats`](https://github.com/sched-ext/scx/tree/main/rust/scx_stats) the stats
-will be collected and aggregated. The scheduler view displays stats such as DSQ latency,
-DSQ slice consumed (how much of the given timeslice was used), and vtime delta. Vtime
-delta is useful in understanding the progression of scheduler vtime. For most schedulers
-vtime delta should remain rather stable as DSQs are consumed. If a scheduler is using FIFO
-scheduling this field may be blank.
-<img width="1919" alt="image" src="https://github.com/user-attachments/assets/34b645d0-afd9-4b8c-a2e3-db2118d87dfd" />
+will be collected and aggregated. The scheduler view displays stats such as DSQ
+latency, DSQ slice consumed (how much of the given timeslice was used), and
+vtime delta. Vtime delta is useful in understanding the progression of
+scheduler vtime. For most schedulers vtime delta should remain rather stable as
+DSQs are consumed. If a scheduler is using FIFO scheduling this field may be
+blank.
+![scxtop](https://github.com/user-attachments/assets/34b645d0-afd9-4b8c-a2e3-db2118d87dfd)
 
 ## MCP Mode - AI-Assisted Scheduler Analysis
 
-`scxtop` includes a Model Context Protocol (MCP) server that exposes scheduler observability
-data to AI assistants like Claude. This enables natural language queries, automated analysis,
-and intelligent debugging of scheduler behavior.
+`scxtop` includes a Model Context Protocol (MCP) server that exposes scheduler
+observability data to AI assistants like Claude. This enables natural language
+queries, automated analysis, and intelligent debugging of scheduler behavior.
 
 ### What is MCP?
 
-The Model Context Protocol is a standardized way for AI assistants to access local tools and
-data sources. The scxtop MCP server implements [Anthropic's MCP specification](https://modelcontextprotocol.io/)
+The Model Context Protocol is a standardized way for AI assistants to access
+local tools and data sources. The scxtop MCP server implements
+[Anthropic's MCP specification](https://modelcontextprotocol.io/)
 using JSON-RPC 2.0 over stdio.
 
 ### Running the MCP Server
 
 **One-shot mode** (single query, then exit):
+
 ```bash
 sudo scxtop mcp
 ```
 
 **Daemon mode** (continuous monitoring with event streaming):
+
 ```bash
 sudo scxtop mcp --daemon
 ```
@@ -214,6 +231,7 @@ sudo scxtop mcp --daemon
 **Claude Desktop:**
 
 Add to your Claude Desktop configuration file:
+
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
@@ -233,6 +251,7 @@ Restart Claude Desktop after updating the configuration.
 **Claude Code (CLI):**
 
 Add to your Claude Code settings:
+
 - **macOS/Linux**: `~/.config/claude/config.json`
 
 ```json
@@ -247,6 +266,7 @@ Add to your Claude Code settings:
 ```
 
 Or configure via Claude Code CLI:
+
 ```bash
 # Add the MCP server
 claude mcp add scxtop --command "sudo /usr/local/bin/scxtop mcp --daemon"
@@ -261,6 +281,7 @@ claude --mcp scxtop "Summarize my system's scheduler"
 ### Features
 
 **Resource URIs** - Read-only data endpoints:
+
 - `scheduler://current` - Active scheduler identification
 - `topology://info` - Hardware topology (CPUs, cores, LLCs, NUMA)
 - `stats://aggregated/{cpu,llc,node,dsq,process}` - Aggregated metrics
@@ -276,6 +297,7 @@ claude --mcp scxtop "Summarize my system's scheduler"
 **Tools** - Interactive query, profiling, and analysis:
 
 *Live Monitoring Tools:*
+
 - `query_stats` - Discover available statistics by category
 - `get_topology` - Get hardware topology with configurable detail level
 - `list_event_subsystems` - List available tracing event subsystems
@@ -290,9 +312,11 @@ claude --mcp scxtop "Summarize my system's scheduler"
 - `analyze_softirq` - Analyze software interrupt processing
 
 *Perfetto Trace Analysis Tools:*
+
 - `load_perfetto_trace` - Load trace file for analysis
 - `query_trace_events` - Query events with filtering (type, time, CPU, PID)
-- `analyze_trace_scheduling` - Run scheduling analysis (5 types: CPU util, process runtime, wakeup latency, migration, DSQ)
+- `analyze_trace_scheduling` - Run scheduling analysis (5 types: CPU util,
+  process runtime, wakeup latency, migration, DSQ)
 - `get_process_timeline` - Get chronological event timeline for process
 - `get_cpu_timeline` - Get chronological event timeline for CPU
 - `find_scheduling_bottlenecks` - Auto-detect performance issues
@@ -304,6 +328,7 @@ claude --mcp scxtop "Summarize my system's scheduler"
 - `get_perf_results` - Retrieve symbolized stack traces and top functions
 
 **5 Workflow Prompts** - Guided analysis templates:
+
 - `analyze_scheduler_performance` - Comprehensive performance analysis
 - `debug_high_latency` - Step-by-step latency debugging
 - `analyze_cpu_imbalance` - Load balancing investigation
@@ -314,7 +339,7 @@ claude --mcp scxtop "Summarize my system's scheduler"
 
 **Claude Desktop** - Ask questions in natural language:
 
-```
+```text
 "Summarize my system's scheduler configuration"
 → Claude uses the summarize_system prompt to gather comprehensive info
 
@@ -360,7 +385,8 @@ claude --mcp scxtop "Profile the system and identify performance bottlenecks"
 
 ### Real-time Event Streaming
 
-In daemon mode, the MCP server converts BPF events to JSON and streams them to the client:
+In daemon mode, the MCP server converts BPF events to JSON and streams them to
+the client:
 
 - Scheduling events: `sched_switch`, `sched_wakeup`, `sched_waking`
 - Task lifecycle: `fork`, `exec`, `exit`
@@ -372,11 +398,15 @@ This enables AI assistants to perform continuous monitoring and proactive analys
 
 ### Benefits
 
-1. **Natural Language Interface**: Ask questions about scheduler behavior in plain English
-2. **Intelligent Correlation**: AI automatically combines multiple metrics and data sources
+1. **Natural Language Interface**: Ask questions about scheduler behavior in
+   plain English
+2. **Intelligent Correlation**: AI automatically combines multiple metrics and
+   data sources
 3. **Guided Workflows**: Structured analysis patterns for common debugging scenarios
-4. **Proactive Monitoring**: In daemon mode, AI can spot issues you didn't explicitly ask about
-5. **Actionable Recommendations**: Get specific tuning suggestions based on observed patterns
+4. **Proactive Monitoring**: In daemon mode, AI can spot issues you didn't
+   explicitly ask about
+5. **Actionable Recommendations**: Get specific tuning suggestions based on
+   observed patterns
 
 ### Documentation
 
@@ -385,14 +415,12 @@ See [CLAUDE_INTEGRATION.md](CLAUDE_INTEGRATION.md) for detailed examples and usa
 ## Documentation
 
 ### User Guides
+
 - **[docs/PERFETTO_TRACE_ANALYSIS.md](docs/PERFETTO_TRACE_ANALYSIS.md)** - Complete perfetto trace analysis guide
-- **[docs/TASK_THREAD_DEBUGGING_GUIDE.md](docs/TASK_THREAD_DEBUGGING_GUIDE.md)** - Task/thread debugging workflows  
+- **[docs/TASK_THREAD_DEBUGGING_GUIDE.md](docs/TASK_THREAD_DEBUGGING_GUIDE.md)** - Task/thread debugging workflows
 - **[docs/PROTOBUF_LOADING_VERIFIED.md](docs/PROTOBUF_LOADING_VERIFIED.md)** - Protobuf loading verification
 - **[docs/README.md](docs/README.md)** - Documentation index
 
 ### Implementation Documentation
-- **[COMPLETE_IMPLEMENTATION_SUMMARY.md](COMPLETE_IMPLEMENTATION_SUMMARY.md)** - Full implementation overview
-- **[PERFETTO_MCP_IMPLEMENTATION.md](PERFETTO_MCP_IMPLEMENTATION.md)** - Core implementation (Phases 1-5)
-- **[EXTENDED_ANALYSIS_COMPLETE.md](EXTENDED_ANALYSIS_COMPLETE.md)** - Extended analyses (Phase 6)
-- **[PERFETTO_ANALYSIS_ROADMAP.md](PERFETTO_ANALYSIS_ROADMAP.md)** - Future enhancements roadmap
+
 - **[CLAUDE_INTEGRATION.md](CLAUDE_INTEGRATION.md)** - Claude Desktop/Code setup guide

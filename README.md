@@ -21,18 +21,20 @@ The following are a few highlights of this repository.
   motivation), please refer to the [overview document](OVERVIEW.md).
 - For a description of the schedulers shipped with this tree, please refer to
   the [schedulers document](scheds/README.md).
-- The following video is the [`scx_rustland`](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland)
-  scheduler which makes most scheduling decisions in userspace `Rust` code showing
-  better FPS in terraria while kernel is being compiled. This doesn't mean that
-  `scx_rustland` is a better scheduler but does demonstrate how safe and easy it is to
-  implement a scheduler which is generally usable and can outperform the default
-  scheduler in certain scenarios.
+- The following video is the
+  [`scx_rustland`](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland)
+  scheduler which makes most scheduling decisions in userspace `Rust` code
+  showing better FPS in terraria while kernel is being compiled. This doesn't
+  mean that `scx_rustland` is a better scheduler but does demonstrate how safe
+  and easy it is to implement a scheduler which is generally usable and can
+  outperform the default scheduler in certain scenarios.
 
 [scx_rustland-terraria](https://github.com/sched-ext/scx/assets/1051723/42ec3bf2-9f1f-4403-80ab-bf5d66b7c2d5)
 
 `sched_ext` is supported by the upstream kernel starting from version 6.12. Both
 Meta and Google are fully committed to `sched_ext` and Meta is in the process of
-mass production deployment. See [`#kernel-feature-status`](#kernel-feature-status) for more details.
+mass production deployment. See [`#kernel-feature-status`](#kernel-feature-status)
+for more details.
 
 In all example shell commands, `$SCX` refers to the root of this repository.
 
@@ -98,7 +100,7 @@ are provided for select distros.
 
 ## Repository Structure
 
-```
+```text
 scx
 |-- scheds               : Sched_ext scheduler implementations
 |   |-- include          : Shared BPF and user C include files including vmlinux.h
@@ -132,23 +134,24 @@ The kernel has to be built with the following configuration:
 - `CONFIG_BPF_JIT_DEFAULT_ON=y`
 - `CONFIG_SCHED_CLASS_EXT=y`
 
-The [`scx/kernel.config`](./kernel.config) file includes all required and other recommended options for using `sched_ext`.
-You can append its contents to your kernel `.config` file to enable the necessary features.
+The [`scx/kernel.config`](./kernel.config) file includes all required and other
+recommended options for using `sched_ext`. You can append its contents to your
+kernel `.config` file to enable the necessary features.
 
 ### Building and Installing
 
 #### Rust Schedulers
 
 ```shell
-$ cd $SCX
-$ cargo build --release                 # Build all Rust schedulers
-$ cargo build --release -p scx_rusty    # Build specific scheduler
+cd $SCX
+cargo build --release                 # Build all Rust schedulers
+cargo build --release -p scx_rusty    # Build specific scheduler
 ```
 
 Rust schedulers are also published on `crates.io`:
 
 ```shell
-$ cargo install scx_rusty
+cargo install scx_rusty
 ```
 
 See: [CARGO BUILD](CARGO_BUILD.md)
@@ -171,39 +174,47 @@ See: [CARGO BUILD](CARGO_BUILD.md)
 
 ```shell
 # Use specific clang version for Rust schedulers
-$ BPF_CLANG=clang-17 cargo build --release
+BPF_CLANG=clang-17 cargo build --release
 ```
 
 ## Checking scx_stats
 
-With the implementation of `scx_stats`, schedulers no longer display statistics by default. To display the statistics from the currently running scheduler, a manual user action is required.
+With the implementation of `scx_stats`, schedulers no longer display statistics
+by default. To display the statistics from the currently running scheduler, a
+manual user action is required.
 Below are examples of how to do this.
 
 - To check the scheduler statistics, use the
 
 ```shell
-$ scx_SCHEDNAME --monitor $INTERVAL
+scx_SCHEDNAME --monitor $INTERVAL
 ```
 
 for example `0.5` - this will print the output every half a second
 
 ```shell
-$ scx_bpfland --monitor 0.5
+scx_bpfland --monitor 0.5
 ```
 
-Some schedulers may implement different or multiple monitoring options. Refer to `--help` of each scheduler for details.
-Most schedulers also accept `--stats $INTERVAL` to print the statistics directly from the scheduling instance.
+Some schedulers may implement different or multiple monitoring options. Refer
+to `--help` of each scheduler for details.
+Most schedulers also accept `--stats $INTERVAL` to print the statistics
+directly from the scheduling instance.
 
-#### Examples
+### Examples
 
 - `scx_bpfland`
 
 ```shell
 $ scx_bpfland --monitor 5
-[scx_bpfland] tasks -> run:  3/4  int: 2  wait: 3    | nvcsw: 3    | dispatch -> dir: 0     prio: 73    shr: 9
-[scx_bpfland] tasks -> run:  4/4  int: 2  wait: 2    | nvcsw: 3    | dispatch -> dir: 1     prio: 3498  shr: 1385
-[scx_bpfland] tasks -> run:  4/4  int: 2  wait: 2    | nvcsw: 3    | dispatch -> dir: 1     prio: 2492  shr: 1311
-[scx_bpfland] tasks -> run:  4/4  int: 2  wait: 3    | nvcsw: 3    | dispatch -> dir: 2     prio: 3270  shr: 1748
+[scx_bpfland] tasks -> run:  3/4  int: 2  wait: 3    | nvcsw: 3    |
+dispatch -> dir: 0     prio: 73    shr: 9
+[scx_bpfland] tasks -> run:  4/4  int: 2  wait: 2    | nvcsw: 3    |
+dispatch -> dir: 1     prio: 3498  shr: 1385
+[scx_bpfland] tasks -> run:  4/4  int: 2  wait: 2    | nvcsw: 3    |
+dispatch -> dir: 1     prio: 2492  shr: 1311
+[scx_bpfland] tasks -> run:  4/4  int: 2  wait: 3    | nvcsw: 3    |
+dispatch -> dir: 2     prio: 3270  shr: 1748
 ```
 
 - `scx_rusty`
@@ -229,21 +240,33 @@ direct_greedy_cpus=f
 
 ```shell
 $ scx_lavd --monitor 5
-|       12 |      1292 |         3 |         1 |      8510 |   37.6028 |   2.42068 |  99.1304 |      100 |  62.8907 |      100 |      100 |  62.8907 | performance |          100 |            0 |            0 |
-|       13 |      2208 |         3 |         1 |      6142 |   33.3442 |   2.39336 |  98.7626 |      100 |  60.2084 |      100 |      100 |  60.2084 | performance |          100 |            0 |            0 |
-|       14 |       941 |         3 |         1 |      5223 |    31.323 |     1.704 |   99.215 |  100.019 |  59.1614 |      100 |  100.019 |  59.1614 | performance |          100 |            0 |            0 |
+|       12 |      1292 |         3 |         1 |      8510 |   37.6028 |
+|   2.42068 |  99.1304 |      100 |  62.8907 |      100 |      100 |
+|  62.8907 | performance |          100 |            0 |            0 |
+|       13 |      2208 |         3 |         1 |      6142 |   33.3442 |
+|   2.39336 |  98.7626 |      100 |  60.2084 |      100 |      100 |
+|  60.2084 | performance |          100 |            0 |            0 |
+|       14 |       941 |         3 |         1 |      5223 |    31.323 |
+|     1.704 |   99.215 |  100.019 |  59.1614 |      100 |  100.019 |
+|  59.1614 | performance |          100 |            0 |            0 |
 ```
 
 - `scx_rustland`
 
 ```shell
 $ scx_rustland --monitor 5
-[RustLand] tasks -> r:  1/4  w: 3 /3  | pf: 0     | dispatch -> u: 4     k: 0     c: 0     b: 0     f: 0     | cg: 0
-[RustLand] tasks -> r:  1/4  w: 2 /2  | pf: 0     | dispatch -> u: 28385 k: 0     c: 0     b: 0     f: 0     | cg: 0
-[RustLand] tasks -> r:  0/4  w: 4 /0  | pf: 0     | dispatch -> u: 25288 k: 0     c: 0     b: 0     f: 0     | cg: 0
-[RustLand] tasks -> r:  0/4  w: 2 /0  | pf: 0     | dispatch -> u: 30580 k: 0     c: 0     b: 0     f: 0     | cg: 0
-[RustLand] tasks -> r:  0/4  w: 2 /0  | pf: 0     | dispatch -> u: 30824 k: 0     c: 0     b: 0     f: 0     | cg: 0
-[RustLand] tasks -> r:  1/4  w: 1 /1  | pf: 0     | dispatch -> u: 33178 k: 0     c: 0     b: 0     f: 0     | cg: 0
+[RustLand] tasks -> r:  1/4  w: 3 /3  | pf: 0     | dispatch ->
+u: 4     k: 0     c: 0     b: 0     f: 0     | cg: 0
+[RustLand] tasks -> r:  1/4  w: 2 /2  | pf: 0     | dispatch ->
+u: 28385 k: 0     c: 0     b: 0     f: 0     | cg: 0
+[RustLand] tasks -> r:  0/4  w: 4 /0  | pf: 0     | dispatch ->
+u: 25288 k: 0     c: 0     b: 0     f: 0     | cg: 0
+[RustLand] tasks -> r:  0/4  w: 2 /0  | pf: 0     | dispatch ->
+u: 30580 k: 0     c: 0     b: 0     f: 0     | cg: 0
+[RustLand] tasks -> r:  0/4  w: 2 /0  | pf: 0     | dispatch ->
+u: 30824 k: 0     c: 0     b: 0     f: 0     | cg: 0
+[RustLand] tasks -> r:  1/4  w: 1 /1  | pf: 0     | dispatch ->
+u: 33178 k: 0     c: 0     b: 0     f: 0     | cg: 0
 ```
 
 ## systemd services
@@ -256,7 +279,8 @@ sched-ext has been fully upstreamed as of 6.12.
 
 ## [Breaking Changes](./BREAKING_CHANGES.md)
 
-[A list of the breaking changes](./BREAKING_CHANGES.md) in the `sched_ext` kernel tree and the associated commits for the schedulers in this repo.
+[A list of the breaking changes](./BREAKING_CHANGES.md) in the `sched_ext`
+kernel tree and the associated commits for the schedulers in this repo.
 
 ## [Developer Guide](./DEVELOPER_GUIDE.md)
 
@@ -268,9 +292,9 @@ with schedulers? See the developer guide for more details.
 We aim to build a friendly and approachable community around `sched_ext`. You
 can reach us through the following channels:
 
-- `GitHub`: https://github.com/sched-ext/scx
-- `Discord`: https://discord.gg/b2J8DrWa7t
-- `Mailing List`: sched-ext@lists.linux.dev (for kernel development)
+- `GitHub`: <https://github.com/sched-ext/scx>
+- `Discord`: <https://discord.gg/b2J8DrWa7t>
+- `Mailing List`: <sched-ext@lists.linux.dev> (for kernel development)
 
 We also hold weekly office hours every Tuesday. Please see the `#office-hours`
 channel on `Discord` for details.
@@ -282,13 +306,27 @@ There are articles and videos about `sched_ext`, which helps you to explore
 
 - [2025 Linux Plumbers Conference MC](https://lpc.events/event/19/sessions/229)
 - [2024 Linux Plumbers Conference MC](https://lpc.events/event/18/sessions/192)
-- [`Sched_ext` YT playlist](https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl)
+- [`Sched_ext` YT playlist][sched_ext_yt_playlist]
 - [LWN: The extensible scheduler class (February, 2023)](https://lwn.net/Articles/922405/)
-- [arighi's blog: Implement your own kernel CPU scheduler in Ubuntu with `sched_ext` (July, 2023)](https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html)
-- [David Vernet's talk : Kernel Recipes 2023 - `sched_ext`: pluggable scheduling in the Linux kernel (September, 2023)](https://youtu.be/8kAcnNVSAdI)
-- [Changwoo's blog: `sched_ext`: a BPF-extensible scheduler class (Part 1) (December, 2023)](https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/)
-- [arighi's blog: Getting started with `sched_ext` development (April, 2024)](https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html)
-- [Changwoo's blog: `sched_ext`: scheduler architecture and interfaces (Part 2) (June, 2024)](https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/)
-- [arighi's YT channel: `scx_bpfland` Linux scheduler demo: topology awareness (August, 2024)](https://youtu.be/R-FEZOveG-I)
-- [David Vernet's talk: Kernel Recipes 2024 - Scheduling with superpowers: Using `sched_ext` to get big perf gains (September, 2024)](https://youtu.be/Cy7-oqdcUCs)
-- [arighi's talk: Kernel Recipes 2025 - Schedule Recipes (September, 2025)](https://youtu.be/NEwCs7EqAbU)
+- [arighi's blog: Implement your own kernel CPU scheduler in Ubuntu with
+  `sched_ext` (July, 2023)][arighi_impl_cpu_sched]
+- [David Vernet's talk : Kernel Recipes 2023 - `sched_ext`: pluggable
+  scheduling in the Linux kernel (September, 2023)](https://youtu.be/8kAcnNVSAdI)
+- [Changwoo's blog: `sched_ext`: a BPF-extensible scheduler class (Part 1)
+  (December, 2023)][changwoo_part1]
+- [arighi's blog: Getting started with `sched_ext` development (April, 2024)][arighi_getting_started]
+- [Changwoo's blog: `sched_ext`: scheduler architecture and interfaces (Part 2)
+  (June, 2024)][changwoo_part2]
+- [arighi's YT channel: `scx_bpfland` Linux scheduler demo: topology awareness
+  (August, 2024)](https://youtu.be/R-FEZOveG-I)
+- [David Vernet's talk: Kernel Recipes 2024 - Scheduling with superpowers:
+  Using `sched_ext` to get big perf gains (September, 2024)][vernet_kr2024]
+- [arighi's talk: Kernel Recipes 2025 - Schedule Recipes (September, 2025)][arighi_kr2025]
+
+[sched_ext_yt_playlist]: https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl
+[arighi_impl_cpu_sched]: https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html
+[changwoo_part1]: https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/
+[arighi_getting_started]: https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html
+[changwoo_part2]: https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/
+[vernet_kr2024]: https://youtu.be/Cy7-oqdcUCs
+[arighi_kr2025]: https://youtu.be/NEwCs7EqAbU

@@ -64,7 +64,9 @@ the CI and will fail with a patch if your code doesn't match. We currently need
 a nightly version of `Rust` to format so have pinned this for consistency. If you
 have `rustup` installed this will use the version in `rust-toolchain.toml`.
 
-    $ cargo fmt
+```text
+$ cargo fmt
+```
 
 ## Useful Tools
 

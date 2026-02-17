@@ -1,9 +1,11 @@
 # Building schedulers in the `scx` project
 
-The `scx` repository is organized as a **Cargo workspace** containing multiple schedulers, shared libraries, and tools.
+The `scx` repository is organized as a **Cargo workspace** containing multiple
+schedulers, shared libraries, and tools.
 Schedulers are implemented as individual Rust crates under `scheds/rust/*`.
 
-This document explains how to build the entire project as well as individual schedulers and tools.
+This document explains how to build the entire project as well as individual
+schedulers and tools.
 
 ---
 
@@ -120,7 +122,9 @@ Besides schedulers, the workspace includes several tools:
 
 ## 5. Installing from crates.io
 
-Some schedulers and tools may also be available directly from [crates.io](https://crates.io). This allows you to install them without cloning the repository.
+Some schedulers and tools may also be available directly from
+[crates.io](https://crates.io). This allows you to install them without cloning
+the repository.
 
 ### Examples
 
@@ -129,9 +133,11 @@ Some schedulers and tools may also be available directly from [crates.io](https:
 | `scxtop`     | `cargo install scxtop`     |
 | `scx_flash`  | `cargo install scx_flash`  |
 
-This will place the binary in `~/.cargo/bin`, which you should add to your `PATH` if it is not already included.
+This will place the binary in `~/.cargo/bin`, which you should add to your
+`PATH` if it is not already included.
 
-> **Note**: Availability on crates.io depends on which components the maintainers publish there. Not all schedulers may be published.
+> **Note**: Availability on crates.io depends on which components the
+> maintainers publish there. Not all schedulers may be published.
 
 ### Installing system-wide
 
@@ -143,7 +149,8 @@ To make a scheduler or tool available system-wide, you can either:
    sudo cp ~/.cargo/bin/scxtop /usr/local/bin/
    ```
 
-2. Or add `~/.cargo/bin` to your system `PATH`, for example by adding this line to `~/.bashrc` or `~/.zshrc`:
+2. Or add `~/.cargo/bin` to your system `PATH`, for example by adding this line
+   to `~/.bashrc` or `~/.zshrc`:
 
    ```bash
    export PATH="$HOME/.cargo/bin:$PATH"
@@ -234,9 +241,11 @@ cargo clean
 - **Build everything**: `cargo build --release`
 - **Build one scheduler**: `cargo build --profile=<profile> -p <name>`
 - **Install from crates.io**: `cargo install <crate_name>`
-- **Make available system-wide**: copy binary to `/usr/local/bin` or add `~/.cargo/bin` to `PATH`
+- **Make available system-wide**: copy binary to `/usr/local/bin` or add
+  `~/.cargo/bin` to `PATH`
 - **Run tests**: `cargo test`
 - **Cross-compile**: `cargo build --target=<target>`
 - **Profiles available**: `release`, `release-tiny`, `release-fast`
 
-This approach allows you to build and test either the whole project at once or focus on a single scheduler or tool.
+This approach allows you to build and test either the whole project at once or
+focus on a single scheduler or tool.

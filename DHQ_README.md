@@ -8,7 +8,7 @@ The Double Helix Queue (DHQ) is a BPF arena queue data structure inspired by DNA
 
 ## Visual Representation
 
-```
+```text
 Double Helix Queue (DHQ) - DNA-Inspired Structure
 ==================================================
 
@@ -171,6 +171,7 @@ Heap property: parent.vtime ≤ children.vtime
 The Double Helix Queue operates fundamentally differently from traditional queues:
 
 #### Core Mechanism
+
 1. **Dual Min Heaps**: Each strand is backed by a min heap (binary heap), providing O(log n) insert/delete operations with better cache locality than tree-based structures
 2. **Per-Strand Ordering**: Within each strand, tasks are ordered either by:
    - **FIFO mode**: Sequence numbers (seq_a, seq_b) for insertion order
@@ -185,6 +186,7 @@ The Double Helix Queue operates fundamentally differently from traditional queue
 The strand pairing works through two complementary constraints:
 
 **Enqueue Phase**:
+
 ```c
 // When inserting to strand A:
 if (size_a >= size_b + max_imbalance) {
@@ -194,6 +196,7 @@ if (size_a >= size_b + max_imbalance) {
 ```
 
 **Dequeue Phase**:
+
 ```c
 // When popping from strand A:
 if (dequeue_count_a >= dequeue_count_b + max_imbalance) {
@@ -203,6 +206,7 @@ if (dequeue_count_a >= dequeue_count_b + max_imbalance) {
 ```
 
 This creates a "window" of allowed imbalance. If `max_imbalance=10`:
+
 - Strand A can have up to 10 more tasks than strand B
 - Strand A can dequeue up to 10 more tasks than strand B
 - Beyond this, operations block until the other strand catches up
@@ -233,12 +237,14 @@ This creates a "window" of allowed imbalance. If `max_imbalance=10`:
 #### vs. DSQ (Dispatch Queues)
 
 **DSQ Limitations**:
+
 - Single vtime-ordered queue per domain
 - No built-in cache affinity awareness
 - Cross-LLC migrations require manual queue selection
 - No automatic load balancing between LLCs
 
 **DHQ Advantages**:
+
 1. **Cache Affinity**: Each strand naturally maps to an LLC, keeping tasks cache-warm
 2. **Migration Control**: Strand pairing prevents excessive cross-LLC migration
 3. **Work Conservation**: Priority mode allows stealing work while respecting affinity
@@ -246,7 +252,8 @@ This creates a "window" of allowed imbalance. If `max_imbalance=10`:
 5. **Lower Contention**: Two separate heaps reduce lock contention vs single DSQ
 
 **Concrete Example**:
-```
+
+```text
 System: 2 LLCs in same NUMA node
 Traditional DSQ approach:
   - mig_dsq: Tasks from both LLCs mixed together
@@ -263,12 +270,14 @@ DHQ approach:
 #### vs. ATQ (Arena Task Queue)
 
 **ATQ Characteristics**:
+
 - Single arena-based queue
 - FIFO or vtime ordering
 - No cache topology awareness
 - Simple enqueue/dequeue without domains
 
 **DHQ Advantages**:
+
 1. **Topology Awareness**: Strands explicitly model LLC topology
 2. **Controlled Migration**: Strand pairing prevents migration storms
 3. **Flexible Policies**: Three dequeue modes vs ATQ's single mode
@@ -277,7 +286,8 @@ DHQ approach:
 6. **Adaptive Behavior**: Can switch between local (strand-specific) and global (cross-strand) dequeue
 
 **Performance Difference**:
-```
+
+```text
 Scenario: High-frequency task migration between LLCs
 
 ATQ behavior:
@@ -296,12 +306,14 @@ DHQ behavior (Priority mode, max_imbalance=3):
 #### vs. Traditional Single Queue
 
 **Single Queue Problems**:
+
 - Head-of-line blocking
 - High lock contention on many-core systems
 - No cache locality
 - Poor scalability
 
 **DHQ Advantages**:
+
 1. **Parallelism**: Two heaps allow concurrent operations on different strands
 2. **Reduced Contention**: Lock acquisitions distributed across strands
 3. **Scalability**: O(log n) operations on smaller heaps instead of O(log 2n) on single heap
@@ -311,6 +323,7 @@ DHQ behavior (Priority mode, max_imbalance=3):
 ### When to Use DHQ
 
 **Ideal Use Cases**:
+
 1. **Multi-LLC Systems**: Systems with 2+ LLCs per NUMA node
 2. **Cache-Sensitive Workloads**: Applications where cache misses dominate performance
 3. **Balanced Workloads**: When both LLCs have similar load characteristics
@@ -318,6 +331,7 @@ DHQ behavior (Priority mode, max_imbalance=3):
 5. **Latency-Critical**: Priority mode for strict vtime fairness
 
 **When to Use Alternatives**:
+
 - **Single LLC**: Use regular DSQ (DHQ overhead not needed)
 - **Unbalanced Load**: If one LLC is always much busier, ATQ may be simpler
 - **Simple FIFO**: If no priority ordering needed, basic DSQ is sufficient
@@ -326,18 +340,21 @@ DHQ behavior (Priority mode, max_imbalance=3):
 ### Performance Characteristics
 
 **Complexity**:
+
 - Insert: O(log n) where n = tasks in one strand (not total)
 - Delete: O(log n) per strand
 - Peek: O(1) per strand, O(2) for cross-strand comparison
 - Space: O(n) for two heaps + metadata
 
 **Scalability**:
+
 - Lock contention: Lower than single queue (distributed across strands)
 - Cache behavior: Better than mixed queue (locality preserved)
 - Migration cost: Tunable via max_imbalance
 - Worst case: If one strand is empty, behaves like single queue
 
 **Tuning Parameters**:
+
 - `max_imbalance=0`: Unlimited imbalance, maximum work conservation
 - `max_imbalance=1`: Strict pairing, maximum fairness, possible starvation
 - `max_imbalance=3`: Balanced (default in p2dq), good for most workloads
@@ -349,6 +366,7 @@ DHQ behavior (Priority mode, max_imbalance=3):
 #### Definitions and Notation
 
 Let:
+
 - `n` = total number of tasks across both strands
 - `n_A` = number of tasks in strand A
 - `n_B` = number of tasks in strand B
@@ -361,7 +379,7 @@ Let:
 
 **1. Insert Operation: `scx_dhq_insert_vtime()`**
 
-```
+```text
 Operation sequence:
 1. Acquire lock                           O(1) amortized
 2. Check imbalance constraint             O(1)
@@ -380,7 +398,7 @@ Average:    O(log(n/2)) = O(log n - 1) = O(log n)
 
 **2. Delete Operation: `scx_dhq_pop()`**
 
-```
+```text
 Mode-specific analysis:
 
 a) Priority Mode:
@@ -419,7 +437,7 @@ All modes: O(log n) worst case
 
 **3. Peek Operations: `scx_dhq_peek()`**
 
-```
+```text
 Priority Mode:
    1. Acquire lock                        O(1)
    2. Get minimum from heap A             O(1) - stored at heap root
@@ -432,11 +450,12 @@ Priority Mode:
 Other modes: Similar O(1) analysis
 ```
 
-**Proof**: Min heaps store the minimum element at the root (index 0), accessible in constant time without traversal.
+**Proof**: Min heaps store the minimum element at the root (index 0),
+accessible in constant time without traversal.
 
 **4. Query Operations: `scx_dhq_nr_queued()`**
 
-```
+```text
    1. Acquire lock                        O(1)
    2. Return size_a + size_b              O(1)
    3. Release lock                        O(1)
@@ -447,7 +466,8 @@ Other modes: Similar O(1) analysis
 #### Space Complexity Analysis
 
 **Per-DHQ overhead:**
-```
+
+```text
 Metadata:
   - strand_a pointer                      8 bytes
   - strand_b pointer                      8 bytes
@@ -466,7 +486,8 @@ Metadata:
 ```
 
 **Per-task overhead (in min heap):**
-```
+
+```text
 Each heap element contains:
   - task pointer (u64)                    8 bytes
   - vtime/seq key (u64)                   8 bytes
@@ -477,7 +498,8 @@ Array-based storage provides better cache locality than pointer-based trees.
 ```
 
 **Total space complexity:**
-```
+
+```text
 S(n) = O(1) + n × O(1)
      = O(n)
 
@@ -485,6 +507,7 @@ Where n is total number of tasks queued
 ```
 
 **Memory locality analysis:**
+
 - Metadata: Single cache line (96 bytes ≈ 1.5 cache lines)
 - Heap elements: Array-based, excellent sequential access locality
 - Cache misses per operation: O(log n) but better constants than tree traversal
@@ -496,7 +519,7 @@ Where n is total number of tasks queued
 
 Let `k` be the number of concurrent CPUs attempting operations:
 
-```
+```text
 Single Queue (baseline):
   - All k CPUs contend for same lock
   - Average wait time: O(k)
@@ -515,7 +538,7 @@ Speedup: 2× in lock contention, assuming uniform strand access
 
 If operations arrive in batches of size `b`:
 
-```
+```text
 Traditional approach (single lock hold per operation):
   Cost = b × (acquire + O(log n) + release)
        = b × O(log n)
@@ -545,7 +568,7 @@ Constant factor improvement: Better cache locality from array-based heaps
 
 **Scalability bounds:**
 
-```
+```text
 DHQ scalability factor (vs single queue):
 
   α(k, m) = min(2, k/m)
@@ -565,7 +588,7 @@ DHQ scalability factor (vs single queue):
 
 **1. Pathological enqueue pattern (all to one strand):**
 
-```
+```text
 Given: m = max_imbalance, all inserts target strand A
 
 After m inserts:
@@ -582,7 +605,7 @@ This prevents pathological imbalance, but may reduce throughput
 
 **2. Alternating mode with imbalanced arrival:**
 
-```
+```text
 Scenario: Tasks arrive only to strand A, alternating dequeue
 
 Arrival rate to A: λ_A = 1000 tasks/sec
@@ -600,7 +623,7 @@ Mitigation: Use Priority or Balanced mode instead
 
 **3. Lock convoy effect:**
 
-```
+```text
 Under high contention (k > 100 concurrent CPUs):
 
 Traditional lock: All k CPUs wait for single lock
@@ -621,7 +644,7 @@ However, if all k CPUs target same strand:
 
 **Expected imbalance after n insertions:**
 
-```
+```text
 E[|size_a - size_b|] = |E[size_a] - E[size_b]|
                      = |np - n(1-p)|
                      = n|2p - 1|
@@ -644,7 +667,7 @@ Probability of violating max_imbalance = m:
 
 **Example calculation (p = 0.5, n = 1000, m = 10):**
 
-```
+```text
 σ = √(1000 × 0.5 × 0.5) ≈ 15.8
 
 P(block) ≈ 2Φ(-10/15.8)
@@ -657,9 +680,9 @@ the strands will be within 10 tasks of each other.
 
 #### Theoretical Performance Bounds
 
-**Theorem 1: DHQ provides at most 2× speedup over single queue**
+##### Theorem 1: DHQ provides at most 2× speedup over single queue
 
-```
+```text
 Proof:
   Let T_single = time for n operations on single queue
   Let T_dhq = time for n operations on DHQ
@@ -678,9 +701,9 @@ Proof:
   QED
 ```
 
-**Theorem 2: Strand pairing prevents unbounded imbalance**
+##### Theorem 2: Strand pairing prevents unbounded imbalance
 
-```
+```text
 Proof by contradiction:
 
   Assume unbounded imbalance is possible with finite max_imbalance m.
@@ -697,9 +720,11 @@ Proof by contradiction:
   QED
 ```
 
-**Corollary**: Maximum memory overhead bounded by `O(n + 2m)` where n is minimum queue size needed and 2m is maximum imbalance across both strands.
+**Corollary**: Maximum memory overhead bounded by `O(n + 2m)` where n is minimum
+queue size needed and 2m is maximum imbalance across both strands.
 
 ### Tuning Parameters
+
 - `max_imbalance=0`: Unlimited imbalance, maximum work conservation
 - `max_imbalance=1`: Strict pairing, maximum fairness, possible starvation
 - `max_imbalance=3`: Balanced (default in p2dq), good for most workloads
@@ -711,12 +736,14 @@ Proof by contradiction:
 In scx_p2dq's LLC migration:
 
 **Before DHQ (using DSQ)**:
+
 - Tasks from both LLCs in single mig_dsq
 - No cache affinity tracking
 - High cross-LLC migration rate
 - Cache thrashing under load
 
 **After DHQ (Priority mode, max_imbalance=3)**:
+
 - LLC 0 tasks → Strand A
 - LLC 1 tasks → Strand B
 - Tasks migrate only when:
@@ -761,6 +788,7 @@ struct scx_dhq {
 **Key Innovation**: All min heap elements are pre-allocated during DHQ creation to avoid sleepable allocations in the fast path. This makes DHQ usable in non-sleepable BPF contexts like enqueue callbacks.
 
 **How it works**:
+
 1. **Creation Time** (sleepable context):
    - Allocate `capacity` heap elements upfront using `scx_minheap_alloc()`
    - Split capacity evenly between strand_a and strand_b heaps (capacity/2 each)
@@ -777,6 +805,7 @@ struct scx_dhq {
    - Predictable memory footprint: `capacity × 16 bytes + metadata`
 
 **Benefits**:
+
 - ✅ Usable in non-sleepable contexts (enqueue, dispatch)
 - ✅ Passes BPF verifier (no sleepable function calls)
 - ✅ Predictable memory usage
@@ -809,18 +838,21 @@ struct scx_dhq {
 The DHQ implements a "strand pairing" constraint to keep the double helix complete:
 
 ### Enqueue Constraint
+
 ```c
 // Blocked if: my_size >= other_size + max_imbalance
 // Returns: -EAGAIN if strand is too far ahead
 ```
 
 ### Dequeue Constraint
+
 ```c
 // Blocked if: my_dequeue_count >= other_dequeue_count + max_imbalance
 // Returns: NULL if strand has dequeued too far ahead
 ```
 
 This ensures:
+
 - Balanced load across strands (LLCs)
 - Work-conserving behavior (can still process from either strand)
 - Prevents pathological cases where one strand dominates
@@ -828,6 +860,7 @@ This ensures:
 ## API
 
 ### Creation
+
 ```c
 // Create DHQ with infinite capacity, no strand constraint
 scx_dhq_t *dhq = (scx_dhq_t *)scx_dhq_create(fifo, mode);
@@ -840,6 +873,7 @@ scx_dhq_t *dhq = (scx_dhq_t *)scx_dhq_create_balanced(fifo, capacity, mode, max_
 ```
 
 ### Enqueue (FIFO Mode)
+
 ```c
 // Insert with automatic sequencing
 // Returns -EAGAIN if strand constraint violated
@@ -847,6 +881,7 @@ int scx_dhq_insert(scx_dhq_t *dhq, u64 taskc_ptr, u64 strand);
 ```
 
 ### Enqueue (VTime Mode)
+
 ```c
 // Insert with explicit vtime (priority)
 // Within each strand, tasks are vtime-ordered
@@ -895,6 +930,7 @@ int strand_size = scx_dhq_nr_queued_strand(scx_dhq_t *dhq, u64 strand);
 When using DHQ in a scheduler context where CPUs are mapped to specific strands (e.g., LLC 0 → Strand A, LLC 1 → Strand B), you **must** use strand-specific operations:
 
 **Problem with Generic Operations:**
+
 ```c
 // ❌ WRONG - Generic operations don't respect CPU-to-strand mapping
 u64 pid = scx_dhq_peek(dhq);        // Might peek wrong strand for this CPU
@@ -902,12 +938,14 @@ u64 task = scx_dhq_pop(dhq);        // Might pop from wrong strand
 ```
 
 This causes:
+
 1. **Load Imbalance**: CPU from strand A might consume all tasks from strand B
 2. **Cache Thrashing**: Tasks migrate to wrong LLC, destroying cache locality
 3. **Fairness Violations**: One LLC starves while the other is overloaded
 4. **Strand Separation**: The double helix constraint breaks down
 
 **Correct Strand-Specific Operations:**
+
 ```c
 // ✅ CORRECT - Always specify the strand for this CPU
 struct cpu_ctx *cpuc = lookup_cpu_ctx(cpu);
@@ -916,6 +954,7 @@ u64 task = scx_dhq_pop_strand(dhq, cpuc->dhq_strand);
 ```
 
 This ensures:
+
 1. CPUs only consume from their designated strand
 2. Cache locality is preserved (tasks stay on their LLC)
 3. Strand pairing constraint works correctly
@@ -926,6 +965,7 @@ This ensures:
 After popping from DHQ, always use `scx_bpf_dsq_move_to_local()` instead of direct dispatch to `SCX_DSQ_LOCAL`:
 
 **Problem with Direct Dispatch:**
+
 ```c
 // ❌ WRONG - Race condition between affinity check and dispatch
 if (bpf_cpumask_test_cpu(cpu, p->cpus_ptr)) {
@@ -934,6 +974,7 @@ if (bpf_cpumask_test_cpu(cpu, p->cpus_ptr)) {
 ```
 
 **Race Condition:**
+
 1. Pop task from DHQ at time T₀
 2. Check affinity at time T₁ - passes
 3. Task becomes migration-disabled at time T₂ (between T₁ and T₃)
@@ -942,6 +983,7 @@ if (bpf_cpumask_test_cpu(cpu, p->cpus_ptr)) {
 The error: `"SCX_DSQ_LOCAL[_ON] cannot move migration disabled task from CPU X to Y"`
 
 **Correct Atomic Approach:**
+
 ```c
 // ✅ CORRECT - Atomic affinity handling
 u64 pid = scx_dhq_pop_strand(dhq, cpuc->dhq_strand);
@@ -960,12 +1002,14 @@ if (pid) {
 ```
 
 **Why This Works:**
+
 - `scx_bpf_dsq_insert_vtime()` to LLC DSQ always succeeds (no affinity check)
 - `scx_bpf_dsq_move_to_local()` performs atomic affinity check at kernel level
 - If task became migration-disabled, it stays in LLC DSQ for proper CPU
 - No race window between check and dispatch
 
 This pattern applies to all DHQ/ATQ dequeue paths:
+
 1. `consume_llc()` - cross-LLC work stealing
 2. `p2dq_dispatch_impl()` minimum vtime selection
 3. Fallback DHQ/ATQ pop paths
@@ -973,6 +1017,7 @@ This pattern applies to all DHQ/ATQ dequeue paths:
 ### DHQ Integration Pattern for scx_p2dq
 
 **Setup (per NUMA node with 2 LLCs):**
+
 ```c
 // One DHQ per pair of LLCs in same NUMA node
 struct llc_ctx *llc0 = lookup_llc_ctx(0);
@@ -1007,6 +1052,7 @@ for_each_cpu(cpu, llc1) {
 ```
 
 **Enqueue (when task can migrate):**
+
 ```c
 void enqueue(struct task_struct *p, u64 enq_flags) {
     struct cpu_ctx *cpuc = lookup_cpu_ctx(scx_bpf_task_cpu(p));
@@ -1033,6 +1079,7 @@ void enqueue(struct task_struct *p, u64 enq_flags) {
 ```
 
 **Dispatch (vtime comparison across strands):**
+
 ```c
 void dispatch(s32 cpu) {
     struct cpu_ctx *cpuc = lookup_cpu_ctx(cpu);
@@ -1067,6 +1114,7 @@ void dispatch(s32 cpu) {
 ```
 
 **Benefits of This Pattern:**
+
 1. **Cache Affinity**: Tasks naturally stay on their origin LLC (strand)
 2. **Work Conservation**: Cross-strand stealing via priority mode when needed
 3. **Controlled Migration**: `max_imbalance` prevents migration storms

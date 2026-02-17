@@ -21,18 +21,21 @@ analyze_trace_scheduling({
 ```
 
 **Output shows:**
+
 - **Running time:** Actually executing on CPU
 - **Runnable time:** Waiting for CPU (scheduler latency!)
 - **Sleeping time:** Voluntarily waiting (I/O, locks, etc.)
 - **Blocked time:** Uninterruptible wait (disk I/O)
 
 **Interpretation:**
+
 - High **runnable %**: Task is CPU-starved (system overloaded)
 - High **sleeping %**: Task is I/O-bound or waiting on events
 - High **blocked %**: Disk I/O issues
 - High **scheduler latency p99**: Long wait times when ready to run
 
 **Example Real Result:**
+
 ```json
 {
   "pid": 2952187,
@@ -63,6 +66,7 @@ get_process_timeline({
 ```
 
 **Output shows chronological events:**
+
 - **Scheduled**: Task got CPU (which CPU, when)
 - **Preempted**: Task lost CPU (state, when)
 - **Woken**: Task woken by another task (by whom, when)
@@ -71,6 +75,7 @@ get_process_timeline({
 - **Exited**: Task terminated
 
 **Use cases:**
+
 - Trace execution flow of a specific task
 - Find unexpected preemptions
 - Identify migration patterns
@@ -91,10 +96,12 @@ analyze_trace_scheduling({
 ```
 
 **Output shows:**
+
 - Total preemption count
 - **Top preemptors:** Which tasks preempted you and how often
 
 **Example Real Result:**
+
 ```json
 {
   "pid": 2952187,
@@ -126,11 +133,13 @@ correlate_wakeup_to_schedule({
 ```
 
 **Output shows:**
+
 - Each wakeup event with waker PID
 - Precise wakeup→schedule latency
 - Full percentiles (p50/p95/p99/p999)
 
 **Example Result:**
+
 ```json
 {
   "pid": 1234,
@@ -141,7 +150,8 @@ correlate_wakeup_to_schedule({
 ```
 
 **With percentiles:**
-```
+
+```text
 p50: 63ms   ← Median wakeup latency
 p99: 738ms  ← 99% wake within 738ms
 p999: 1001ms ← Extreme outliers
@@ -162,12 +172,14 @@ analyze_trace_scheduling({
 ```
 
 **Output shows:**
+
 - Wakeup chains: Task A wakes B, B wakes C, C wakes D...
 - Total cumulative latency
 - Critical paths ranked by severity
 
 **Example Chain:**
-```
+
+```text
 Producer(PID 100) wakes
 → Processor(PID 200, 5ms latency) wakes
 → Aggregator(PID 300, 50ms latency) wakes
@@ -192,10 +204,12 @@ analyze_trace_scheduling({
 ```
 
 **Output shows two stages:**
+
 - **Waking→Wakeup:** Kernel wakeup path (typically microseconds)
 - **Wakeup→Schedule:** Runqueue wait (can be milliseconds)
 
 **Example Result:**
+
 ```json
 {
   "waking_to_wakeup": {
@@ -227,11 +241,13 @@ analyze_trace_scheduling({
 ```
 
 **Output shows:**
+
 - Total migrations
 - Per-process migration counts
 - Cross-NUMA/LLC migrations
 
 **Plus use Process Timeline:**
+
 ```javascript
 get_process_timeline({ trace_id: "trace", pid: 1234 })
 ```
@@ -254,6 +270,7 @@ get_cpu_timeline({
 ```
 
 **Output shows:**
+
 - All context switches on that CPU
 - Which tasks are competing
 - Softirq processing interrupting your task
@@ -467,11 +484,13 @@ get_process_timeline({
 ```
 
 Count **Scheduled** and **Migrated** events:
+
 - Events show which CPUs task ran on
 - **Migrated** events show CPU changes
 - High migration count = poor affinity
 
 **Example:**
+
 ```json
 {
   "events": [
@@ -494,12 +513,14 @@ Count unique CPUs used → **High count = poor affinity**
 **Problem:** Task has p99 latency of 200ms
 
 **Debugging:**
+
 ```javascript
 // 1. Check task state
 analyze_trace_scheduling({analysis_type: "task_states", pid: 1234})
 ```
 
 **Result:**
+
 ```json
 {
   "runnable_percent": 85,
@@ -512,6 +533,7 @@ analyze_trace_scheduling({analysis_type: "task_states", pid: 1234})
 **Root Cause:** System overload
 
 **Actions:**
+
 - Reduce system load
 - Increase task priority
 - Pin task to dedicated CPUs
@@ -524,6 +546,7 @@ analyze_trace_scheduling({analysis_type: "task_states", pid: 1234})
 **Problem:** 10-thread application has poor throughput
 
 **Debugging:**
+
 ```javascript
 // 1. Check all threads
 analyze_trace_scheduling({analysis_type: "task_states", limit: 100})
@@ -534,6 +557,7 @@ analyze_trace_scheduling({analysis_type: "wakeup_chains", limit: 20})
 ```
 
 **Result:**
+
 ```json
 {
   "chain": [
@@ -548,6 +572,7 @@ analyze_trace_scheduling({analysis_type: "wakeup_chains", limit: 20})
 **Diagnosis:** Serial dependency chain causing cumulative 165ms latency.
 
 **Actions:**
+
 - Reduce dependencies (parallelize)
 - Batch work to reduce wakeup frequency
 - Check lock contention
@@ -559,6 +584,7 @@ analyze_trace_scheduling({analysis_type: "wakeup_chains", limit: 20})
 **Problem:** Thread sometimes runs fast, sometimes slow
 
 **Debugging:**
+
 ```javascript
 // 1. Get complete timeline
 get_process_timeline({trace_id: "trace", pid: 1234})
@@ -571,6 +597,7 @@ correlate_wakeup_to_schedule({trace_id: "trace", pid: 1234})
 ```
 
 **Look for:**
+
 - Migration events during slow periods (CPU changes)
 - Different preemptors during slow periods
 - High p99 vs p50 (bimodal distribution)
@@ -597,36 +624,42 @@ correlate_wakeup_to_schedule({trace_id: "trace", pid: 1234})
 ## Common Patterns and Diagnoses
 
 ### Pattern 1: High runnable_percent (>50%)
+
 **Symptom:** Task spending most time in RUNNABLE state
 **Root Cause:** CPU starvation (system overloaded)
 **Verification:** Check `p99_scheduler_latency_ns` (>10ms is high)
 **Action:** Reduce load, add CPUs, or increase task priority
 
 ### Pattern 2: High sleeping_percent (>80%)
+
 **Symptom:** Task spending most time SLEEPING
 **Root Cause:** I/O-bound or event-driven (normal for many apps)
 **Verification:** Check if voluntary or involuntary
 **Action:** If unexpected, check what task is waiting for
 
 ### Pattern 3: Many involuntary switches
+
 **Symptom:** Task preempted frequently (>100 times)
 **Root Cause:** Low priority or CPU contention
 **Verification:** Check `preempted_by` to see preemptors
 **Action:** Increase priority or isolate task
 
 ### Pattern 4: Long wakeup chains (>5 hops)
+
 **Symptom:** Task at end of long dependency chain
 **Root Cause:** Serial pipeline architecture
 **Verification:** Check cumulative latency
 **Action:** Parallelize or batch work
 
 ### Pattern 5: Bimodal latency (low p50, high p99)
+
 **Symptom:** Usually fast, occasionally very slow
 **Root Cause:** Occasional contention or preemption
 **Verification:** Use timeline to find slow periods
 **Action:** Identify interfering tasks from timeline
 
 ### Pattern 6: High migration count
+
 **Symptom:** Task moving between CPUs frequently
 **Root Cause:** Poor CPU affinity or aggressive load balancing
 **Verification:** Count migrations in timeline
@@ -639,17 +672,20 @@ correlate_wakeup_to_schedule({trace_id: "trace", pid: 1234})
 **Important:** In Linux, threads are tasks with their own PIDs (TIDs).
 
 **All analyses work at the thread level:**
+
 - `task_states` - per-thread states
 - `preemptions` - per-thread preemptions
 - `timeline` - per-thread events
 - `wakeup correlation` - per-thread wakeups
 
 **To analyze a multi-threaded process:**
+
 1. Get all thread PIDs (TIDs) in the thread group (TGID)
 2. Run analysis for each thread PID
 3. Aggregate results as needed
 
 **Example:**
+
 ```javascript
 // Process with threads: 1000 (main), 1001, 1002, 1003
 
@@ -671,12 +707,14 @@ analyze_trace_scheduling({analysis_type: "task_states", limit: 1000})
 ### Find Thread Interaction Patterns
 
 1. **Get all threads in process:**
+
 ```javascript
 analyze_trace_scheduling({analysis_type: "task_states", limit: 1000})
 // Identify your thread PIDs
 ```
 
 2. **Check wakeup relationships:**
+
 ```javascript
 correlate_wakeup_to_schedule({trace_id: "trace", limit: 10000})
 // Filter to your thread PIDs
@@ -684,6 +722,7 @@ correlate_wakeup_to_schedule({trace_id: "trace", limit: 10000})
 ```
 
 3. **Visualize communication:**
+
 - Thread A wakes Thread B frequently → likely producer-consumer
 - Thread A and B wake each other → mutex/lock pattern
 - No wakeup relationship → independent threads
@@ -745,6 +784,7 @@ export_trace_analysis({
 ```
 
 **Result:** Complete understanding of:
+
 - Which tasks are slow
 - Why they're slow (CPU starvation, I/O wait, etc.)
 - Who's causing the problem (preemptors)

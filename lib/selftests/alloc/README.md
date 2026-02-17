@@ -3,14 +3,14 @@ ARENA ASAN FRAMEWORK
 
 This is a short document logging the development of ASAN for BPF arena memory.
 The document will be removed once development is complete and the feature is
-upstreamed to the kernel. 
+upstreamed to the kernel.
 
-Initial development for the feature was done in https://github.com/etsal/aasan/tree/fixup.
+Initial development for the feature was done in <https://github.com/etsal/aasan/tree/fixup>.
 The initial code contribution here in the scx/ repo squashes the development history for
 clarity. Later upstreaming will split the code into separate features.
 
 STATUS
-======
+------
 
 Fully functional, still in development. The three allocators are passing their selftests,
 both for the allocators themselves and for ASAN support. Reporting is currently manual
@@ -23,7 +23,7 @@ trivial.
 ASAN support requires an LLVM compiler built from HEAD and bpf-next.
 
 DESIGN
-======
+------
 
 We have two axes on which we need to work:
 
@@ -48,15 +48,14 @@ We need analogues for all the code in mm/kasan:
 - [ We shouldn't need the code for dynamically creating shadow regions
 here, since it is built into the arena.]
 
-
 PLAN
-====
+----
 
 We implement KASAN in passes, feature by feature. We want each
 feature to be self-contained, i.e. not depend on later features.
 
 For each feature we implement the basic KASAN mechanism, then we
-integrate it with the allocator. We then write test cases that 
+integrate it with the allocator. We then write test cases that
 exercise the allocator. We define features in terms of KASAN's
 public functions, exported or not, and implement the same or
 equivalent functionality in AASAN.
@@ -77,7 +76,7 @@ Some observations:
 - We ignore stack-related ASAN functions, since we cannot stack
   allocate arena memory.
 - We do not require more than one aux stack because it is only useful
-  when chaining contexts together. Chaining BPF contexts together is 
+  when chaining contexts together. Chaining BPF contexts together is
   only possible with exceptions, when we are already tearing down
   the execution context. Tracking memory access violations is then
   not that useful in that context.
@@ -85,43 +84,42 @@ Some observations:
   arena and allocate its "virtual address space" when we create it.
   The shadow memory region is built into it and never has to expand.
 - We depend on arena page fault reporting for accesses to completely
-  unallocated arena memory. This mirrors how touching nonexistent 
+  unallocated arena memory. This mirrors how touching nonexistent
   memory pages in KASAN triggers a fault. This is why we don't need
   to eagerly poison the shadow map and can leave it full of 0s, which
-  means memory from bpf_alloc_pages() is immediately valid. This is 
+  means memory from bpf_alloc_pages() is immediately valid. This is
   also why we poison it when we insert it into the allocator.
-
 
 Basic functionality
 -------------------
 
 - [A] Basic allocator prototype(s)
-    - static allocator (no frees)
-    - stack allocator (page granularity)
-    - buddy allocator (generic power-of-2 objects)
+  - static allocator (no frees)
+  - stack allocator (page granularity)
+  - buddy allocator (generic power-of-2 objects)
 - [A] Separating the allocator codebases
 - [T] Selftest stubs for the allocators
 - [A] Adding allocator destructors for testing
-    - track static alloc allocated blocks to free on destroy()
-    - free all stack segments in stack allocator on destroy()
-    - destroy buddy allocator chunks on destroy()
+  - track static alloc allocated blocks to free on destroy()
+  - free all stack segments in stack allocator on destroy()
+  - destroy buddy allocator chunks on destroy()
 - [T] Initial testing for allocator
-    - static: Alloc/fill, alloc/fill, check, alloc/fill, check, etc.
+  - static: Alloc/fill, alloc/fill, check, alloc/fill, check, etc.
 - [M] kasan_poison
 - [M] kasan_unpoison
 - [M] ASAN intrinsics - [generic.c]
 - [A] Add intrinsics to static allocator
-    - Poisoning on chunk allocation
-    - Unpoisoning on user allocation
+  - Poisoning on chunk allocation
+  - Unpoisoning on user allocation
 - [T] Basic passing tests
-	- Get memory into the allocator and ensure it's poisoned
-	- Allocate memory to the user and ensure it's valid
-		- Test with sizes 1 to 128
-	- Allocate memory to the user and ensure memory right
-	  before it and right after it is invalid
-	  	- Test with sizes 1 to 128
-	- Allocate with a set memory gap between allocations
-		- Has to be a multiple of GRANULE
+  - Get memory into the allocator and ensure it's poisoned
+  - Allocate memory to the user and ensure it's valid
+    - Test with sizes 1 to 128
+  - Allocate memory to the user and ensure memory right
+      before it and right after it is invalid
+          - Test with sizes 1 to 128
+  - Allocate with a set memory gap between allocations
+    - Has to be a multiple of GRANULE
 
 Removing Temporary Workarounds
 ------------------------------
@@ -132,11 +130,11 @@ even with user-specified arena offsets.
 - [M] Make the explicit ASAN calls conditional
 ==================> WE ARE HERE
 
-- [M] Dynamically allocate shadow map memory. Possibly use a 
+- [M] Dynamically allocate shadow map memory. Possibly use a
 per-page statically allocated map to see whether we have allocated
 a page for that part of the map.
-    - One page of a residence map tracks 8 * 4K = 32K pages. We only need
-    to track the pages of the shadow map, which is 1/8th of the 
+  - One page of a residence map tracks 8 * 4K = 32K pages. We only need
+    to track the pages of the shadow map, which is 1/8th of the
     address space = 512MiB worth of pages = 128K pages. So a residence
     map with 4 pages is enough to tell us whether we need to allocate
     memory for the shadow map.
@@ -149,10 +147,10 @@ Alloc/Free Tracking
 - [M] kasan_save_alloc_info
 - [M] kasan_save_free_info
 
-- [M] kasan_get_alloc_meta	
+- [M] kasan_get_alloc_meta
 - [M] kasan_get_free_meta
 
-- [A] Store allocation and freeing info for allocations 
+- [A] Store allocation and freeing info for allocations
 
 - [T] More testing
 
@@ -160,7 +158,7 @@ Reporting
 ---------
 
 - [M] kasan_disable_current - [Critical sections/Nesting]
-- [M] kasan_enable_current  - [Critical sections/Nesting]
+- [M] kasan_enable_current - [Critical sections/Nesting]
 - [T] Add tests with controlled invalid accesses
 - [A] Add a prototype object allocator
 - [M] kasan_get_alloc_size
@@ -189,12 +187,12 @@ Invalid Allocs/Frees
 
 - [M] kasan_byte_accessible
 - [M] kasan_report_invalid_free
-- [M] __kasan_kfree	- [EXPAND]
+- [M] __kasan_kfree    - [EXPAND]
 - [M] __kasan_kfree_large - [EXPAND]
 
 - [A] Add double-free test to the allocator
 - [T] Double frees test should return the specific error
-- [T] Use-after-free (UAF) test should return that it is UAF 
+- [T] Use-after-free (UAF) test should return that it is UAF
 instead of generic error
 
 Quarantining
@@ -227,4 +225,3 @@ Not Strictly Necessary
 - [M] __kasan_check_write
 - [M] kasan_check_range
 - [M] __kasan_unpoison_range
-

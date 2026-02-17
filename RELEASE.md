@@ -1,16 +1,21 @@
-This doc explains both how our releases work and the steps the developer performing the release needs to take.
+
+# Release Process
+
+This doc explains both how our releases work and the steps the developer
+performing the release needs to take.
 
 ## What's a release?
 
 sched_ext cuts a monthly release of the monorepo. This currently has a semantic
 version versioning scheme where we always bump the last number. It may change in
 the future, the key here is it's monotonically increasing. These releases are
-available at https://github.com/sched-ext/scx/releases which correspond to a git
+available at <https://github.com/sched-ext/scx/releases> which correspond to a git
 tag.
 
 ### Versioning schemes
 
 There are two versioning schemes involved in the sched_ext releases:
+
 1. The version number included in the tag. This is monotonically increasing, and
    as they have no further metadata, is also the version of the C schedulers.
 2. The version number of each Rust crate. Each Rust crate, including the scheduler
@@ -46,13 +51,14 @@ permissions to do this, which will be explained as we go through.
 ### The monthly release
 
 There are 3 main steps to the monthly release:
+
 1. Bumping the versions of all crates and cross dependencies in the monorepo.
 2. Publishing all of these new crate versions to crates.io.
 3. Publishing a tag to GitHub and creating a release.
 
 This roughly looks like:
 
-```
+```text
 # bump crate versions and all cross dependencies
 $ cargo xtask bump-versions --all
 # update Cargo.lock
@@ -68,7 +74,7 @@ Now it gets a bit tricky. Cargo is still _really_ racy when publishing a
 monorepo. We can do our best to make it less painful, but there will always be
 opportunities for exciting new failures as-is.
 
-```
+```text
 $ cargo publish --workspace --dry-run
 ```
 
@@ -82,7 +88,8 @@ commit to the CI and wait for the pull request to be green to. These are all thi
 you can amend to fix, so it's best to do that first.
 
 Then:
-```
+
+```text
 $ python3 cargo-publish.py
 ```
 
@@ -99,7 +106,7 @@ Once all the crates are published you can start the merge into `main`. Don't
 rebase because we'll lose the history, a merge commit of possibly several commits
 is the best way to maintain history.
 
-```
+```text
 $ git tag -s -m  'vX.Y.Z' vX.Y.Z
 ```
 
@@ -112,7 +119,7 @@ published crate sources.
 Same story with the signature as above. If CachyOS aren't aware of your GPG key
 it causes them trouble, and often requires force-pushing the tag to sign it later.
 
-Finally, go to https://github.com/sched-ext/scx/releases and draft a new release.
+Finally, go to <https://github.com/sched-ext/scx/releases> and draft a new release.
 You can select your recently pushed tag and auto-generate a changelog.
 
 ### Bumping individual crates
@@ -124,7 +131,8 @@ This is a simpler job. You choose the point in history you want to branch off of
 This may be the last monthly tag, or the last time the crate was updated.
 
 Then run:
-```
+
+```text
 # increase the version of lavd, layered, and all their dependencies
 $ cargo xtask bump-versions -p scx_lavd -p scx_layered
 ```

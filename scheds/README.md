@@ -1,7 +1,8 @@
-SCHED_EXT SCHEDULERS
+# SCHED_EXT SCHEDULERS
+
 ====================
 
-# Introduction
+## Introduction
 
 This directory contains the repo's schedulers.
 
@@ -21,8 +22,7 @@ of schedulers:
 - [`rust`](rust/README.md) describes all of the schedulers with `Rust`
   user space components.
 
-
-# Note on C schedulers
+## Note on C schedulers
 
 This directory previously also held C schedulers for illustration purposes. These
 schedulers are now found only in the Linux kernel repository in

@@ -31,24 +31,29 @@ framework.
 ## Key Features
 
 ### 1. Auto-Discovery
+
 ```json
 {
   "tool": "discover_analyzers",
   "arguments": { "trace_id": "my_trace" }
 }
 ```
+
 Automatically finds applicable analyzers based on available events in the trace.
 
 ### 2. Batch Analysis
+
 ```json
 {
   "tool": "run_all_analyzers",
   "arguments": { "trace_id": "my_trace" }
 }
 ```
+
 Runs all applicable analyzers in one operation.
 
 ### 3. Generic Query Framework
+
 ```json
 {
   "tool": "query_trace",
@@ -65,9 +70,11 @@ Runs all applicable analyzers in one operation.
   }
 }
 ```
+
 SQL-like queries with filtering and aggregation.
 
 ### 4. Outlier Detection
+
 ```json
 {
   "tool": "detect_outliers",
@@ -78,13 +85,16 @@ SQL-like queries with filtering and aggregation.
   }
 }
 ```
+
 Statistical outlier detection across latency, runtime, and CPU metrics using 4 methods:
+
 - **IQR** (Interquartile Range) - Most robust, default method
 - **MAD** (Median Absolute Deviation) - Robust to extreme values
 - **StdDev** (Standard Deviation) - Traditional statistical approach
 - **Percentile** - Threshold-based (p99/p999)
 
 Returns outliers by category:
+
 - **Latency**: Wakeup latency, schedule latency, blocked time
 - **Runtime**: Excessive runtime, minimal runtime, high context switches
 - **CPU**: Overutilized, underutilized, high contention
@@ -135,6 +145,7 @@ Returns outliers by category:
 See the [Developer Guide](./PERFETTO_ANALYZER_GUIDE.md#developer-guide) in the full documentation.
 
 Quick steps:
+
 1. Create analyzer struct with `analyze()` method
 2. Implement `TraceAnalyzer` trait wrapper
 3. Register in `AnalyzerRegistry::register_builtins()`
@@ -144,6 +155,7 @@ Quick steps:
 ## Compatibility
 
 The analyzer system works with perfetto traces from:
+
 - Linux ftrace
 - Android systrace
 - Chrome tracing
@@ -152,6 +164,7 @@ The analyzer system works with perfetto traces from:
 ## Next Steps
 
 The perfetto analyzer system with outlier detection is complete and ready for use. Future enhancements could include:
+
 - Additional analyzers for specific subsystems
 - Real-time streaming analysis
 - Trace comparison tools

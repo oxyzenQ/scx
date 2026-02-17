@@ -2,25 +2,37 @@
 
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL%202.0-blue.svg?style=flat-square)](https://opensource.org/licenses/GPL-2.0)
 [![Kernel: 6.12+](https://img.shields.io/badge/Kernel-6.12%2B-green.svg?style=flat-square)](https://kernel.org)
-[![Status: Experimental](https://img.shields.io/badge/Status-Experimental-orange.svg?style=flat-square)]()
+[![Status: Experimental](https://img.shields.io/badge/Status-Experimental-orange.svg?style=flat-square)](#scx_cake-cake-drr-adapted-for-cpu-scheduling)
 
-> **ABSTRACT**: `scx_cake` is an experimental BPF CPU scheduler that adapts the network [CAKE](https://www.bufferbloat.net/projects/codel/wiki/Cake/) algorithm's DRR++ (Deficit Round Robin++) for CPU scheduling. Designed for **gaming workloads** on modern AMD and Intel hardware.
+> **ABSTRACT**: `scx_cake` is an experimental BPF CPU scheduler that adapts the
+> network [CAKE](https://www.bufferbloat.net/projects/codel/wiki/Cake/)
+> algorithm's DRR++ (Deficit Round Robin++) for CPU scheduling. Designed for
+> **gaming workloads** on modern AMD and Intel hardware.
 >
-> - **4-Tier Classification** — Tasks sorted by EWMA avg_runtime into Critical / Interactive / Frame / Bulk
-> - **Zero Global Atomics** — Per-CPU BSS arrays with MESI-guarded writes eliminate bus locking
-> - **Kernel-Delegated Idle Selection** — `scx_bpf_select_cpu_dfl()` for authoritative, zero-staleness CPU selection
-> - **Per-LLC DSQ Sharding** — Eliminates cross-CCD lock contention on multi-chiplet CPUs
-> - **DRR++ Deficit Tracking** — Network CAKE's flow fairness algorithm adapted for CPU task scheduling
+> - **4-Tier Classification** — Tasks sorted by EWMA avg_runtime into Critical /
+>   Interactive / Frame / Bulk
+> - **Zero Global Atomics** — Per-CPU BSS arrays with MESI-guarded writes
+>   eliminate bus locking
+> - **Kernel-Delegated Idle Selection** — `scx_bpf_select_cpu_dfl()` for
+>   authoritative, zero-staleness CPU selection
+> - **Per-LLC DSQ Sharding** — Eliminates cross-CCD lock contention on
+>   multi-chiplet CPUs
+> - **DRR++ Deficit Tracking** — Network CAKE's flow fairness algorithm adapted
+>   for CPU task scheduling
 
 ---
 
 > [!WARNING]
 > **EXPERIMENTAL SOFTWARE**
-> This scheduler is experimental and intended for use with `sched_ext` on Linux Kernel 6.12+. Performance may vary depending on hardware and user configuration.
+> This scheduler is experimental and intended for use with `sched_ext` on Linux
+> Kernel 6.12+. Performance may vary depending on hardware and user
+> configuration.
 
 > [!NOTE]
 > **AI TRANSPARENCY**
-> Large Language Models were used for optimization pattern matching and design exploration. All implementation details have been human-verified, benchmarked on real gaming workloads, and validated for correctness.
+> Large Language Models were used for optimization pattern matching and design
+> exploration. All implementation details have been human-verified, benchmarked
+> on real gaming workloads, and validated for correctness.
 
 ---
 
@@ -56,20 +68,29 @@ sudo scx_cake -v
 
 ## 2. Philosophy
 
-Traditional schedulers (CFS, EEVDF) optimize for **fairness** — if a game and a compiler both run, each gets 50% CPU time. For gaming, this creates two problems:
+Traditional schedulers (CFS, EEVDF) optimize for **fairness** — if a game and a
+compiler both run, each gets 50% CPU time. For gaming, this creates two
+problems:
 
 1. **Latency inversion**: A 50µs input handler waits behind a 50ms compile job
 2. **Frame jitter**: Game render threads get preempted mid-frame by background work
 
-**scx_cake's answer**: Classify tasks by _behavior_ (how long they run), not by type or nice value. Short-burst tasks (input, audio) get instant priority. Long-running tasks (compilers) get larger time slices but lower priority. The system self-tunes — no manual configuration needed.
+**scx_cake's answer**: Classify tasks by _behavior_ (how long they run), not by
+type or nice value. Short-burst tasks (input, audio) get instant priority.
+Long-running tasks (compilers) get larger time slices but lower priority. The
+system self-tunes — no manual configuration needed.
 
-This is the same insight behind network CAKE: short flows (DNS, gaming packets) should not be delayed by bulk flows (downloads). scx_cake applies this to CPU time.
+This is the same insight behind network CAKE: short flows (DNS, gaming packets)
+should not be delayed by bulk flows (downloads). scx_cake applies this to CPU
+time.
 
 ---
 
 ## 3. 4-Tier System
 
-`scx_cake` classifies every task into one of four tiers based on its **EWMA** (Exponential Weighted Moving Average) runtime. Classification is automatic and continuous — tasks move between tiers as their behavior changes.
+`scx_cake` classifies every task into one of four tiers based on its **EWMA**
+(Exponential Weighted Moving Average) runtime. Classification is automatic and
+continuous — tasks move between tiers as their behavior changes.
 
 ### Tier Gates
 
@@ -81,14 +102,23 @@ This is the same insight behind network CAKE: short flows (DNS, gaming packets) 
 | **T3** | Bulk        | ≥ 8ms       | Compilation, background indexing, batch jobs           | 8.0ms   | 100ms      |
 
 > [!TIP]
-> **No game task should be in T3**. Game render threads run 2-8ms per frame → T2. Physics/AI run 0.5-2ms → T1. Input handlers run < 100µs → T0. Only tasks doing 8ms+ uninterrupted CPU work (shader compilation, loading screens) land in T3.
+> **No game task should be in T3**. Game render threads run 2-8ms per frame →
+> T2. Physics/AI run 0.5-2ms → T1. Input handlers run < 100µs → T0. Only tasks
+> doing 8ms+ uninterrupted CPU work (shader compilation, loading screens) land
+> in T3.
 
 ### How Classification Works
 
-1. **Initial placement**: Based on `nice` value — `nice < 0` → T0, `nice 0-10` → T1, `nice > 10` → T3
-2. **Runtime authority**: After ~3 stops, the EWMA avg_runtime becomes authoritative. A nice -5 task that runs 50ms bursts will reclassify to T3 regardless of nice value.
-3. **Hysteresis**: 10% deadband prevents oscillation at tier boundaries. Promotion requires avg_runtime clearly below the gate; demotion is immediate.
-4. **Graduated backoff**: Once a tier is stable for 3+ consecutive stops, reclassification frequency drops per-tier: T0 rechecks every 1024th stop, T3 every 16th. Instability resets to full-frequency checking.
+1. **Initial placement**: Based on `nice` value — `nice < 0` → T0,
+   `nice 0-10` → T1, `nice > 10` → T3
+2. **Runtime authority**: After ~3 stops, the EWMA avg_runtime becomes
+   authoritative. A nice -5 task that runs 50ms bursts will reclassify to T3
+   regardless of nice value.
+3. **Hysteresis**: 10% deadband prevents oscillation at tier boundaries.
+   Promotion requires avg_runtime clearly below the gate; demotion is immediate.
+4. **Graduated backoff**: Once a tier is stable for 3+ consecutive stops,
+   reclassification frequency drops per-tier: T0 rechecks every 1024th stop,
+   T3 every 16th. Instability resets to full-frequency checking.
 
 ### DRR++ Deficit Tracking
 
@@ -97,7 +127,8 @@ Adapted from network CAKE's flow fairness:
 - Each task starts with a **deficit** (quantum + new-flow bonus ≈ 10ms credit)
 - Each execution bout consumes deficit proportional to runtime
 - When deficit exhausts → new-flow bonus removed → task competes normally
-- This gives newly spawned threads (game launching a worker) instant responsiveness that naturally decays
+- This gives newly spawned threads (game launching a worker) instant
+  responsiveness that naturally decays
 
 ### DVFS (CPU Frequency Scaling)
 
@@ -108,7 +139,8 @@ Each tier maps to a CPU performance target via RODATA lookup table:
 | T0-T2 | 100% (max frequency) | Gaming workloads need full performance                |
 | T3    | 75%                  | Background work can run slightly slower to save power |
 
-On Intel hybrid CPUs (`has_hybrid = true`), targets are scaled by each core's `cpuperf_cap` to prevent over-requesting frequency on E-cores.
+On Intel hybrid CPUs (`has_hybrid = true`), targets are scaled by each core's
+`cpuperf_cap` to prevent over-requesting frequency on E-cores.
 
 ---
 
@@ -119,7 +151,7 @@ On Intel hybrid CPUs (`has_hybrid = true`), targets are scaled by each core's `c
 ```mermaid
 flowchart TD
     subgraph HOT["BPF Hot Path"]
-        SELECT["cake_select_cpu"] --> |SYNC| DIRECT["Direct Dispatch<br/>to waker CPU"]
+        SELECT["cake_select_cpu"] --> |SYNC| DIRECT["Direct Dispatch<br/>to waker\nCPU"]
         SELECT --> |IDLE| KERNEL["scx_bpf_select_cpu_dfl<br/>kernel idle cascade"]
         SELECT --> |ALL BUSY| ENQ["cake_enqueue"]
 
@@ -171,7 +203,7 @@ flowchart TD
 
 **Per-task context** (`cake_task_ctx`, 64 bytes, cache-line aligned):
 
-```
+```text
 Bytes 0-7:   next_slice (u64)           — Pre-computed tier-adjusted quantum
 Bytes 8-11:  deficit_avg_fused (u32)    — [deficit_us:16][avg_runtime_us:16] fused
 Bytes 12-15: packed_info (u32)          — [stable:2][tier:2][flags:4][rsvd:8][wait:8][error:8]
@@ -182,7 +214,7 @@ Bytes 22-63: padding
 
 **Per-CPU mega-mailbox** (`mega_mailbox_entry`, 64 bytes, cache-line isolated):
 
-```
+```text
 Byte 0: flags          — [1:0]=tier, written by cake_tick
 Byte 1: dsq_hint       — DVFS perf target cache
 Byte 2: tick_counter    — Starvation graduated confidence
@@ -191,7 +223,7 @@ Bytes 3-63: reserved
 
 **Per-CPU scratch** (`cake_scratch`, 128 bytes):
 
-```
+```text
 Tunnels select_cpu → enqueue: cached_llc, cached_now (saves 2 kfunc calls)
 DSQ iterator storage for legacy peek fallback
 ```
@@ -205,12 +237,16 @@ flowchart LR
     end
 
     subgraph MULTI["Multi-CCD 9950X"]
-        DSQ1["LLC_DSQ_BASE + 0<br/>CCD 0 cores"] <-->|"cross-LLC steal<br/>when local empty"| DSQ2["LLC_DSQ_BASE + 1<br/>CCD 1 cores"]
+        DSQ1["LLC_DSQ_BASE + 0<br/>CCD 0 cores"]
+        <-->|"cross-LLC steal<br/>when local empty"|
+        DSQ2["LLC_DSQ_BASE + 1<br/>CCD 1 cores"]
     end
 ```
 
-- **Vtime encoding**: `(tier << 56) | (timestamp & 0x00FFFFFFFFFFFFFF)` — lower tiers drain first within each LLC DSQ
-- **RODATA gate**: `if (nr_llcs <= 1) return;` skips all cross-LLC stealing on single-CCD systems
+- **Vtime encoding**: `(tier << 56) | (timestamp & 0x00FFFFFFFFFFFFFF)` —
+  lower tiers drain first within each LLC DSQ
+- **RODATA gate**: `if (nr_llcs <= 1) return;` skips all cross-LLC stealing on
+  single-CCD systems
 
 ### Zero Global State
 
@@ -224,14 +260,21 @@ flowchart LR
 
 ### Kfunc Tunneling
 
-`select_cpu` caches `cpu_llc_id` and `scx_bpf_now()` in per-CPU scratch. `enqueue` reuses these values, saving ~40-60ns (2 kfunc trampoline entries) on the all-busy path.
+`select_cpu` caches `cpu_llc_id` and `scx_bpf_now()` in per-CPU scratch.
+`enqueue` reuses these values, saving ~40-60ns (2 kfunc trampoline entries) on
+the all-busy path.
 
 ### Graduated Confidence
 
 Two independent confidence systems reduce overhead when scheduling is stable:
 
-1. **Tick starvation check**: `tick_counter` tracks consecutive ticks without contention. Skip masks grow from 0 → 1 → 3 → 7, checking every 1st → 2nd → 4th → 8th tick. Any contention resets to full alertness.
-2. **Reclassification backoff**: When a task's tier is stable for 3+ consecutive stops, reclassification drops to per-tier intervals (T0: every 1024th, T3: every 16th). A spot-check detects tier-change triggers without full reclassification cost.
+1. **Tick starvation check**: `tick_counter` tracks consecutive ticks without
+   contention. Skip masks grow from 0 → 1 → 3 → 7, checking every 1st → 2nd →
+   4th → 8th tick. Any contention resets to full alertness.
+2. **Reclassification backoff**: When a task's tier is stable for 3+
+   consecutive stops, reclassification drops to per-tier intervals (T0: every
+   1024th, T3: every 16th). A spot-check detects tier-change triggers without
+   full reclassification cost.
 
 ---
 
@@ -267,7 +310,10 @@ Two independent confidence systems reduce overhead when scheduling is stable:
 | T3 Bulk        | 1.4x               | 2.8ms           | 100ms            |
 
 > [!NOTE]
-> **Higher tiers get smaller slices** — T0 tasks (input, audio) run < 100µs and release cores fast. T3 tasks (compilers) get larger slices for cache efficiency. This is the opposite of traditional priority systems where high priority = more CPU time.
+> **Higher tiers get smaller slices** — T0 tasks (input, audio) run < 100µs and
+> release cores fast. T3 tasks (compilers) get larger slices for cache
+> efficiency. This is the opposite of traditional priority systems where high
+> priority = more CPU time.
 
 ### Examples
 
@@ -298,10 +344,14 @@ sudo scx_cake -p legacy
 
 ### Design Targets
 
-- **Sub-microsecond scheduling decisions** — Select CPU + enqueue in ~17ns (SYNC) to ~36ns (all-busy)
-- **Zero bus lock contention** — No global atomics means no scaling regression under load
-- **Consistent 1% lows** — Tier-encoded vtime prevents frame time spikes from background work
-- **Input priority** — Mouse/keyboard handlers reach T0 within 3 stops, get dispatched before all other work
+- **Sub-microsecond scheduling decisions** — Select CPU + enqueue in ~17ns
+  (SYNC) to ~36ns (all-busy)
+- **Zero bus lock contention** — No global atomics means no scaling regression
+  under load
+- **Consistent 1% lows** — Tier-encoded vtime prevents frame time spikes from
+  background work
+- **Input priority** — Mouse/keyboard handlers reach T0 within 3 stops, get
+  dispatched before all other work
 
 ### Benchmarks
 
@@ -310,7 +360,9 @@ sudo scx_cake -p legacy
 - Splitgate 2 — Competitive FPS latency testing
 
 > [!NOTE]
-> Throughput workloads (compilers, render farms) will perform **worse** than CFS/EEVDF. This scheduler explicitly trades throughput for latency — the same tradeoff network CAKE makes for packets.
+> Throughput workloads (compilers, render farms) will perform **worse** than
+> CFS/EEVDF. This scheduler explicitly trades throughput for latency — the same
+> tradeoff network CAKE makes for packets.
 
 ---
 

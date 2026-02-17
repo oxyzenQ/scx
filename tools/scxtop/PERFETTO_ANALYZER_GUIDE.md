@@ -8,6 +8,7 @@ enables deep analysis of Linux kernel tracing data from various sources
 including ftrace, Android systrace, and Chrome tracing.
 
 **Key Features:**
+
 - built-in analyzers across 5 categories (Scheduling, Interrupt, I/O, Power, Extended)
 - Automatic analyzer discovery based on trace capabilities
 - Generic SQL-like query framework for custom analysis
@@ -56,6 +57,7 @@ including ftrace, Android systrace, and Chrome tracing.
 ```
 
 Returns comprehensive trace information including:
+
 - Duration, CPU count, process count, event count
 - Trace capabilities (available events, has process tree, etc.)
 - Applicable analyzers by category
@@ -80,9 +82,11 @@ Automatically discovers and runs all applicable analyzers in parallel.
 ### Core Tools
 
 #### `load_perfetto_trace`
+
 Loads a perfetto trace file from disk.
 
 **Parameters:**
+
 - `file_path` (required): Absolute path to .proto file
 - `trace_id` (optional): ID to reference this trace (defaults to filename)
 
@@ -91,9 +95,11 @@ Loads a perfetto trace file from disk.
 ---
 
 #### `discover_analyzers`
+
 Discovers which analyzers can run on a trace based on available events.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID from load_perfetto_trace
 - `category` (optional): Filter by category (scheduling|interrupt|io|power|extended)
 
@@ -102,12 +108,15 @@ Discovers which analyzers can run on a trace based on available events.
 ---
 
 #### `get_trace_summary`
+
 Gets comprehensive trace summary including capabilities and applicable analyzers.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 
 **Returns:**
+
 - Trace duration, CPU/process/event counts
 - Trace capabilities (available events, process tree, sched_ext)
 - Applicable analyzers grouped by category
@@ -115,9 +124,11 @@ Gets comprehensive trace summary including capabilities and applicable analyzers
 ---
 
 #### `run_all_analyzers`
+
 Runs all applicable analyzers on a trace.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `category` (optional): Run only analyzers from specific category
 
@@ -128,9 +139,11 @@ Runs all applicable analyzers on a trace.
 ### Analysis Tools
 
 #### `analyze_trace_scheduling`
+
 Performs specific scheduling analysis.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `analysis_type` (required): One of:
   - `cpu_utilization` - Per-CPU utilization stats
@@ -160,9 +173,11 @@ Performs specific scheduling analysis.
 ---
 
 #### `find_scheduling_bottlenecks`
+
 Automatically detects scheduling bottlenecks.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `limit` (optional): Max bottlenecks to return (default: 10)
 
@@ -171,9 +186,11 @@ Automatically detects scheduling bottlenecks.
 ---
 
 #### `correlate_wakeup_to_schedule`
+
 Correlates wakeup events to schedule events, showing waker→wakee latencies.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `pid` (optional): Filter for specific process
 - `limit` (optional): Max correlations (default: 100)
@@ -185,9 +202,11 @@ Correlates wakeup events to schedule events, showing waker→wakee latencies.
 ### Query Tools
 
 #### `query_trace`
+
 Executes generic SQL-like query on trace with filtering and aggregation.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `event_type` (optional): Filter by event type (e.g., "sched_switch")
 - `cpu` (optional): Filter by CPU
@@ -195,6 +214,7 @@ Executes generic SQL-like query on trace with filtering and aggregation.
 - `start_time_ns` (optional): Start of time range
 - `end_time_ns` (optional): End of time range
 - `field_filters` (optional): Array of field-level filters:
+
   ```json
   {
     "field": "prev_state",
@@ -202,9 +222,11 @@ Executes generic SQL-like query on trace with filtering and aggregation.
     "value": 1
   }
   ```
+
 - `limit` (optional): Max events to return (default: 1000)
 - `offset` (optional): Number of events to skip (default: 0)
 - `aggregation` (optional): Aggregation function:
+
   ```json
   {
     "function": "count_by",  // count|count_by|avg|min|max|group_by
@@ -215,6 +237,7 @@ Executes generic SQL-like query on trace with filtering and aggregation.
 **Returns:** Query results with timing, matched count, and events or aggregation results
 
 **Example - Find all sched_switch events for CPU 0 with prev_state=1:**
+
 ```json
 {
   "tool": "query_trace",
@@ -237,9 +260,11 @@ Executes generic SQL-like query on trace with filtering and aggregation.
 ---
 
 #### `query_trace_events`
+
 Simple event query by type and filters.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `event_type` (optional): Event type filter (default: "all")
 - `start_time_ns` (optional): Start time
@@ -254,9 +279,11 @@ Simple event query by type and filters.
 ### Timeline Tools
 
 #### `get_process_timeline`
+
 Gets chronological timeline of all events for a specific process.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `pid` (required): Process ID
 - `start_time_ns` (optional): Start time (defaults to trace start)
@@ -267,9 +294,11 @@ Gets chronological timeline of all events for a specific process.
 ---
 
 #### `get_cpu_timeline`
+
 Gets chronological timeline of all events for a specific CPU.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `cpu` (required): CPU ID
 - `start_time_ns` (optional): Start time
@@ -282,9 +311,11 @@ Gets chronological timeline of all events for a specific CPU.
 ### Export Tools
 
 #### `export_trace_analysis`
+
 Exports comprehensive trace analysis to JSON file.
 
 **Parameters:**
+
 - `trace_id` (required): Trace ID
 - `output_path` (required): Output file path
 - `analysis_types` (optional): Types to include (default: all)
@@ -299,6 +330,7 @@ Exports comprehensive trace analysis to JSON file.
 ### Scheduling Category (4 analyzers)
 
 #### cpu_utilization
+
 Analyzes per-CPU utilization and per-process runtime with parallel processing.
 
 **Required events:** sched_switch
@@ -308,6 +340,7 @@ Analyzes per-CPU utilization and per-process runtime with parallel processing.
 ---
 
 #### wakeup_latency
+
 Analyzes wakeup-to-schedule latencies with full percentile statistics.
 
 **Required events:** sched_waking, sched_switch
@@ -317,6 +350,7 @@ Analyzes wakeup-to-schedule latencies with full percentile statistics.
 ---
 
 #### migration_patterns
+
 Analyzes CPU migration patterns and hotspots.
 
 **Required events:** sched_migrate_task
@@ -326,6 +360,7 @@ Analyzes CPU migration patterns and hotspots.
 ---
 
 #### dsq_summary
+
 Analyzes sched_ext dispatch queue behavior (requires scx trace).
 
 **Required events:** None (uses scx metadata)
@@ -338,6 +373,7 @@ Analyzes sched_ext dispatch queue behavior (requires scx trace).
 ### Interrupt Category (2 analyzers)
 
 #### irq_analysis
+
 Analyzes hardware interrupt handler latencies.
 
 **Required events:** irq_handler_entry, irq_handler_exit
@@ -347,6 +383,7 @@ Analyzes hardware interrupt handler latencies.
 ---
 
 #### ipi_analysis
+
 Analyzes inter-processor interrupts.
 
 **Required events:** ipi_entry, ipi_exit
@@ -358,6 +395,7 @@ Analyzes inter-processor interrupts.
 ### I/O Category (4 analyzers)
 
 #### block_io
+
 Analyzes block device I/O patterns and latencies.
 
 **Required events:** block_rq_insert, block_rq_issue
@@ -367,6 +405,7 @@ Analyzes block device I/O patterns and latencies.
 ---
 
 #### network_io
+
 Analyzes network transmit/receive and bandwidth.
 
 **Required events:** net_dev_xmit, netif_receive_skb
@@ -376,6 +415,7 @@ Analyzes network transmit/receive and bandwidth.
 ---
 
 #### memory_pressure
+
 Analyzes memory allocation and reclaim.
 
 **Required events:** mm_page_alloc, mm_page_free
@@ -385,6 +425,7 @@ Analyzes memory allocation and reclaim.
 ---
 
 #### file_io
+
 Analyzes file sync operations.
 
 **Required events:** ext4_sync_file_enter, ext4_sync_file_exit
@@ -396,6 +437,7 @@ Analyzes file sync operations.
 ### Power Category (3 analyzers)
 
 #### cpu_frequency
+
 Analyzes CPU frequency scaling behavior.
 
 **Required events:** cpu_frequency
@@ -405,6 +447,7 @@ Analyzes CPU frequency scaling behavior.
 ---
 
 #### cpu_idle
+
 Analyzes CPU idle state transitions.
 
 **Required events:** cpu_idle
@@ -414,6 +457,7 @@ Analyzes CPU idle state transitions.
 ---
 
 #### power_state
+
 Analyzes system suspend/resume transitions.
 
 **Required events:** suspend_resume
@@ -425,6 +469,7 @@ Analyzes system suspend/resume transitions.
 ### Extended Category (4 analyzers)
 
 #### task_states
+
 Analyzes task state transitions and distributions.
 
 **Required events:** sched_switch
@@ -434,6 +479,7 @@ Analyzes task state transitions and distributions.
 ---
 
 #### preemptions
+
 Analyzes task preemption patterns.
 
 **Required events:** sched_switch
@@ -443,6 +489,7 @@ Analyzes task preemption patterns.
 ---
 
 #### wakeup_chains
+
 Detects wakeup chains and cascades.
 
 **Required events:** sched_waking, sched_switch
@@ -452,6 +499,7 @@ Detects wakeup chains and cascades.
 ---
 
 #### latency_breakdown
+
 Breaks down scheduling latency into stages.
 
 **Required events:** sched_waking, sched_switch
@@ -605,6 +653,7 @@ McpTool {
 ### Analyzer Categories
 
 Choose the appropriate category:
+
 - **Scheduling** - Context switches, wakeups, migrations
 - **Interrupt** - IRQs, IPIs, softirqs
 - **IO** - Block I/O, network, memory, filesystems
@@ -645,6 +694,7 @@ Enable parallel processing for better performance:
 4. **Use aggregation** instead of retrieving all events when only counts are needed
 
 **Example - Fast aggregation:**
+
 ```json
 {
   "trace_id": "my_trace",
@@ -801,6 +851,7 @@ Analyzers run sequentially but with minimal overhead.
 ### Unit Tests
 
 Run analyzer-specific tests:
+
 ```bash
 cargo test --lib perfetto_analyzers
 cargo test --lib perfetto_query
@@ -810,12 +861,14 @@ cargo test --lib perfetto_analyzer_registry
 ### Integration Tests
 
 Run end-to-end integration tests:
+
 ```bash
 # Requires real trace file at /home/hodgesd/scx/scxtop_trace_0.proto
 cargo test --test perfetto_integration_tests -- --ignored
 ```
 
 **Test Coverage:**
+
 - Complete pipeline (load → discover → analyze → query)
 - Cross-analyzer consistency
 - Performance benchmarks
@@ -834,6 +887,7 @@ cargo test --test perfetto_integration_tests -- --ignored
 **Symptom:** `discover_analyzers` doesn't find expected analyzer
 
 **Solution:** Check if trace has required events:
+
 ```json
 {
   "tool": "get_trace_summary",
@@ -852,6 +906,7 @@ Look at `capabilities.available_events` to see what events are in the trace.
 **Symptom:** Memory usage grows during analysis
 
 **Solution:**
+
 1. Use specific analyzers instead of `run_all_analyzers`
 2. Analyze smaller time windows using query time ranges
 3. Use aggregation instead of retrieving full event data
@@ -863,6 +918,7 @@ Look at `capabilities.available_events` to see what events are in the trace.
 **Symptom:** Queries take > 100ms
 
 **Solution:**
+
 1. Add event type filter
 2. Use time range to narrow search window
 3. Reduce limit if returning many events
@@ -872,7 +928,7 @@ Look at `capabilities.available_events` to see what events are in the trace.
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │                    MCP Server                       │
 ├─────────────────────────────────────────────────────┤
@@ -915,6 +971,7 @@ Look at `capabilities.available_events` to see what events are in the trace.
 ## Contributing
 
 When adding new analyzers:
+
 1. Follow the developer guide above
 2. Add comprehensive tests (unit + integration)
 3. Document in this guide

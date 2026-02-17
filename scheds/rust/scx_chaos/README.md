@@ -1,16 +1,27 @@
-<img src="logo.png" alt="scx_chaos" width="60%">
 
-A general purpose `sched_ext` scheduler designed to amplify race conditions for testing and debugging.
+# scx_chaos
+
+![scx_chaos](logo.png)
+
+A general purpose `sched_ext` scheduler designed to amplify race conditions for
+testing and debugging.
 
 ## Overview
 
-`scx_chaos` is a specialized scheduler that intentionally introduces various forms of latency and performance degradation to help expose race conditions and timing-dependent bugs in applications. Unlike traditional schedulers that aim for optimal performance, `scx_chaos` is designed to stress-test applications by introducing controlled chaos into the scheduling process.
+`scx_chaos` is a specialized scheduler that intentionally introduces various
+forms of latency and performance degradation to help expose race conditions and
+timing-dependent bugs in applications. Unlike traditional schedulers that aim
+for optimal performance, `scx_chaos` is designed to stress-test applications by
+introducing controlled chaos into the scheduling process.
 
-**WARNING**: This scheduler is experimental and should not be used in production environments. It is specifically designed to degrade performance and may cause system instability.
+**WARNING**: This scheduler is experimental and should not be used in
+production environments. It is specifically designed to degrade performance and
+may cause system instability.
 
 ## Features
 
-The scheduler supports several "chaos traits" that can be enabled individually or in combination, with more to come:
+The scheduler supports several "chaos traits" that can be enabled individually
+or in combination, with more to come:
 
 ### Random Delays
 
@@ -50,7 +61,8 @@ sudo scx_chaos
 ### Random Delays
 
 ```bash
-sudo scx_chaos --random-delay-frequency 0.1 --random-delay-min-us 100 --random-delay-max-us 1000
+sudo scx_chaos --random-delay-frequency 0.1 --random-delay-min-us 100 \
+  --random-delay-max-us 1000
 ```
 
 ### CPU Frequency Scaling
@@ -68,7 +80,9 @@ sudo scx_chaos --degradation-frequency 0.15 --degradation-frac7 64
 ### Kprobe Delays
 
 ```bash
-sudo scx_chaos --kprobes-for-random-delays schedule do_exit --kprobe-random-delay-frequency 0.05 --kprobe-random-delay-min-us 50 --kprobe-random-delay-max-us 500
+sudo scx_chaos --kprobes-for-random-delays schedule do_exit \
+  --kprobe-random-delay-frequency 0.05 --kprobe-random-delay-min-us 50 \
+  --kprobe-random-delay-max-us 500
 ```
 
 ### Testing Specific Applications
@@ -117,7 +131,9 @@ sudo scx_chaos --repeat-success [chaos-options] -- ./test-app
 
 ## Command Line Options
 
-> **Note:** For the most up-to-date and complete CLI documentation, run `scx_chaos --help`. This includes all chaos-specific options as well as the full set of p2dq performance tuning options.
+> **Note:** For the most up-to-date and complete CLI documentation, run
+> `scx_chaos --help`. This includes all chaos-specific options as well as the
+> full set of p2dq performance tuning options.
 
 ### Random Delays
 
@@ -157,7 +173,8 @@ sudo scx_chaos --repeat-success [chaos-options] -- ./test-app
 ## Requirements
 
 - Root privileges (required for `sched_ext` and kprobe operations)
-- Modern Linux kernel with `sched_ext` support, chaos has very limited backward compatibility
+- Modern Linux kernel with `sched_ext` support, chaos has very limited backward
+  compatibility
 
 ## Use Cases
 
@@ -179,4 +196,7 @@ The scheduler provides various statistics including:
 
 ## Implementation Details
 
-`scx_chaos` is built on the `sched_ext` framework and uses the `scx_p2dq` scheduler as its base. It implements chaos traits through BPF programs that intercept scheduling decisions and apply configured disruptions based on probability distributions.
+`scx_chaos` is built on the `sched_ext` framework and uses the `scx_p2dq`
+scheduler as its base. It implements chaos traits through BPF programs that
+intercept scheduling decisions and apply configured disruptions based on
+probability distributions.

@@ -21,7 +21,7 @@ following [Motivation](#motivation) section. Following that, we'll provide some
 details on the overall architecture of `sched_ext` in the [How](#how) section
 below.
 
-# Motivation<a name="motivation"></a>
+## Motivation
 
 ## 1. Ease of experimentation and exploration
 
@@ -40,7 +40,7 @@ scheduling being roughly the same across the entire die.
 Systems in the modern age are by comparison much more complex. Modern CPU
 designs, where the total power budget of all CPU cores often far exceeds the
 power budget of the socket, with dynamic frequency scaling, and with or without
-chiplets, have significantly expanded the scheduling problem space.  Cache
+chiplets, have significantly expanded the scheduling problem space. Cache
 hierarchies have become less uniform, with Core Complex (CCX) designs such as
 recent AMD processors having multiple shared L3 caches within a single socket.
 Such topologies resemble NUMA sans persistent NUMA node stickiness.
@@ -245,7 +245,7 @@ nested four level deep.
 Certain industries require specific scheduling behaviors that do not apply
 broadly. For example, ARINC 653 defines scheduling behavior that is widely used
 by avionic software, and some out-of-tree implementations
-(https://ieeexplore.ieee.org/document/7005306) have been built. While the
+(<https://ieeexplore.ieee.org/document/7005306>) have been built. While the
 upstream community may decide to merge one such implementation in the future,
 it would also be entirely reasonable to not do so given the narrowness of
 use-case, and non-generalizable, strict requirements. Such cases can be well
@@ -336,7 +336,7 @@ scheduler is available, it can quickly be rolled out to as many hosts as
 necessary, and function as a stop-gap solution until a longer-term mitigation
 is upstreamed.
 
-# How
+## How
 
 `sched_ext` is a new sched_class which allows scheduling policies to be
 implemented in BPF programs.
@@ -359,7 +359,7 @@ the `name` field. Otherwise, `sched_ext` will provide sane default behavior, suc
 as automatically choosing an idle CPU on the task wakeup path if `.select_cpu()`
 is missing.
 
-### Dispatch queues
+## Dispatch queues
 
 To match the impedance between the scheduler core and the BPF scheduler,
 `sched_ext` uses DSQs (dispatch queues) which can operate as both a FIFO and a
@@ -408,21 +408,21 @@ The following briefly shows how a waking task is scheduled and executed.
    task was dispatched directly from `ops.select_cpu()`). `ops.enqueue()`
    can make one of the following decisions:
 
-   * Immediately dispatch the task to either the global or local DSQ by
+   - Immediately dispatch the task to either the global or local DSQ by
      calling `scx_bpf_dispatch()` with `SCX_DSQ_GLOBAL` or
      `SCX_DSQ_LOCAL`, respectively.
 
-   * Immediately dispatch the task to a custom DSQ by calling
+   - Immediately dispatch the task to a custom DSQ by calling
      `scx_bpf_dispatch()` with a DSQ ID which is smaller than $2^{63}$.
 
-   * Queue the task on the BPF side.
+   - Queue the task on the BPF side.
 
 3. When a CPU is ready to schedule, it first looks at its local DSQ. If
    empty, it then looks at the global DSQ. If there still isn't a task to
    run, `ops.dispatch()` is invoked which can use the following two
    functions to populate the local DSQ.
 
-   * `scx_bpf_dispatch()` dispatches a task to a DSQ. Any target DSQ can
+   - `scx_bpf_dispatch()` dispatches a task to a DSQ. Any target DSQ can
      be used - `SCX_DSQ_LOCAL`, `SCX_DSQ_LOCAL_ON | cpu`,
      `SCX_DSQ_GLOBAL` or a custom DSQ. While `scx_bpf_dispatch()`
      currently can't be called with BPF locks held, this is being worked on
@@ -430,7 +430,7 @@ The following briefly shows how a waking task is scheduled and executed.
      rather than performing them immediately. There can be up to
      `ops.dispatch_max_batch` pending tasks.
 
-   * `scx_bpf_consume()` transfers a task from the specified non-local DSQ
+   - `scx_bpf_consume()` transfers a task from the specified non-local DSQ
      to the dispatching DSQ. This function cannot be called with any BPF
      locks held. `scx_bpf_consume()` flushes the pending dispatched tasks
      before trying to consume the specified DSQ.
@@ -438,13 +438,13 @@ The following briefly shows how a waking task is scheduled and executed.
 4. After `ops.dispatch()` returns, if there are tasks in the local DSQ,
    the CPU runs the first one. If empty, the following steps are taken:
 
-   * Try to consume the global DSQ. If successful, run the task.
+   - Try to consume the global DSQ. If successful, run the task.
 
-   * If `ops.dispatch()` has dispatched any tasks, retry #3.
+   - If `ops.dispatch()` has dispatched any tasks, retry #3.
 
-   * If the previous task is an `SCX` task and still runnable, keep executing it (see `SCX_OPS_ENQ_LAST`).
+   - If the previous task is an `SCX` task and still runnable, keep executing it (see `SCX_OPS_ENQ_LAST`).
 
-   * Go idle.
+   - Go idle.
 
 Note that the BPF scheduler can always choose to dispatch tasks immediately in
 `ops.select_cpu()` or `ops.enqueue()`. If only the built-in DSQs are used,
@@ -466,7 +466,7 @@ will issue an error and unload the scheduler if it is not. For example, if
 runnable for too long without being scheduled, `sched_ext` will detect it and
 error-out the scheduler.
 
-# Closing Thoughts
+## Closing Thoughts
 
 Both Meta and Google have experimented quite a lot with schedulers in the last
 several years. Google has benchmarked various workloads using user space
@@ -477,14 +477,14 @@ in the process of deploying `sched_ext` schedulers on production workloads at
 scale. We expect to leverage it extensively to run various experiments and
 develop customized schedulers for a number of critical workloads.
 
-# Written By
+## Written By
 
 - David Vernet <dvernet@meta.com>
 - Josh Don <joshdon@google.com>
 - Tejun Heo <tj@kernel.org>
 - Barret Rhoden <brho@google.com>
 
-# Supported By
+## Supported By
 
 - Paul Turner <pjt@google.com>
 - Neel Natu <neelnatu@google.com>

@@ -21,5 +21,5 @@ exclusive.
 
 ## Production Ready?
 
-No. This scheduler heavily uses BPF arenas and as such routinely requires a 
+No. This scheduler heavily uses BPF arenas and as such routinely requires a
 bleeding-edge kernel toolchain to even run and verify.

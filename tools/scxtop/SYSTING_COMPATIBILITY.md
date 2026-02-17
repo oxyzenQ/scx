@@ -23,6 +23,7 @@ Added CompactSched format parsing to `perfetto_parser.rs` (lines 132-220, 345-35
 ### Compatibility
 
 **Systing Format**:
+
 - ✅ CompactSched-encoded scheduler events (sched_switch, sched_waking)
 - ✅ Individual FtraceEvents (softirq, irq, etc.)
 - ⚠️ TrackEvent format (partially supported)
@@ -30,6 +31,7 @@ Added CompactSched format parsing to `perfetto_parser.rs` (lines 132-220, 345-35
 
 **Analyzers Verified**:
 All core schedulng analyzers work with systing traces:
+
 1. CPU Utilization
 2. Task State Analysis
 3. Wakeup Chain Detection
@@ -52,20 +54,23 @@ EOF
 ```
 
 Or use the Claude Code `/analyze_trace` command:
-```
+
+```text
 /analyze_trace ~/systing/trace.pb
 ```
 
 ## Test Results
 
 ### Before CompactSched Support
-```
+
+```text
 Total events: 8,575
 Event types: ["softirq"]
 ```
 
 ### After CompactSched Support
-```
+
+```text
 Total events: 17,306 (more than doubled!)
 Event types: ["sched_switch", "sched_waking", "softirq"]
 ```
@@ -111,13 +116,15 @@ Event types: ["sched_switch", "sched_waking", "softirq"]
 ## Testing
 
 Run systing compatibility tests:
+
 ```bash
 cd ~/scx/tools/scxtop
 cargo test --release test_systing -- --nocapture
 ```
 
 Expected output:
-```
+
+```text
 ✓ Successfully loaded systing trace!
   Duration: 1.00 seconds
   Total events: 17306
@@ -128,6 +135,6 @@ Expected output:
 
 ## References
 
-- **Systing**: https://github.com/josefbacik/systing
-- **Perfetto CompactSched**: https://perfetto.dev/docs/reference/trace-packet-proto#CompactSched
+- **Systing**: <https://github.com/josefbacik/systing>
+- **Perfetto CompactSched**: <https://perfetto.dev/docs/reference/trace-packet-proto#CompactSched>
 - **scxtop Perfetto Guide**: `tools/scxtop/PERFETTO_ANALYZER_GUIDE.md`

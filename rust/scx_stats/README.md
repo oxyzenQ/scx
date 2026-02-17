@@ -51,11 +51,11 @@ necessary including the statistics metadata. The `stat` struct and field
 attribute allows adding annotations. The following attributes are currently
 defined:
 
-*struct and field attributes*
+## struct and field attributes
 
 - desc: Description.
 
-*struct-only attributes*
+## struct-only attributes
 
 - top: Marks the top-level statistics struct which is reported by default.
   Used by generic tools to find the starting point when processing the
@@ -149,7 +149,7 @@ statistics struct definitions, the metadata can come handy:
 
 For this example, the output would look like the following:
 
-```
+```text
 {
   "ClusterStats": {
     "desc": "cluster statistics",
@@ -209,7 +209,7 @@ The protocol used for communication on the UNIX domain socket is line based
 with each line containing a json and straightforward. Run `examples/client`
 with `RUST_LOG=trace` set to see what get sent on the wire:
 
-```
+```text
 > cargo run --example server -- ~/tmp/socket
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
      Running `target/debug/examples/server /home/htejun/tmp/socket`
@@ -218,12 +218,17 @@ Use `socat - UNIX-CONNECT:"/home/htejun/tmp/socket"` for raw connection.
 Press any key to exit.
 ```
 
-```
+```text
 $ RUST_LOG=trace cargo run --example client -- ~/tmp/socket
 ...
 ===== Requesting "stats" but receiving with serde_json::Value:
-2024-08-15T22:13:23.769Z TRACE [scx_stats::client] Sending: {"req":"stats","args":{"target":"top"}}
-2024-08-15T22:13:23.769Z TRACE [scx_stats::client] Received: {"errno":0,"args":{"resp":{"at":12345,"bitmap":[3735928559,3203391149],"doms_dict":{"0":{"events":1234,"name":"domain 0","pressure":1.234},"3":{"events":5678,"name":"domain 3","pressure":5.678}},"name":"test cluster"}}}
+2024-08-15T22:13:23.769Z TRACE [scx_stats::client] Sending:
+{"req":"stats","args":{"target":"top"}}
+2024-08-15T22:13:23.769Z TRACE [scx_stats::client] Received:
+{"errno":0,"args":{"resp":{"at":12345,"bitmap":[3735928559,3203391149],
+"doms_dict":{"0":{"events":1234,"name":"domain 0","pressure":1.234},
+"3":{"events":5678,"name":"domain 3","pressure":5.678}},
+"name":"test cluster"}}}
 Ok(
     Object {
         "at": Number(12345),

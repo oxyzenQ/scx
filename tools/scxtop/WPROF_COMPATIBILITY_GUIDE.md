@@ -63,6 +63,7 @@ is crucial for compatibility with scxtop.
 **Command**: `sudo ./wprof -o trace.proto`
 
 **Description**:
+
 - Uses Perfetto TrackEvent messages with custom categories
 - Rich timeline view with detailed metadata
 - **Includes sched_ext metadata** (layer_id, dsq_id)
@@ -71,11 +72,13 @@ is crucial for compatibility with scxtop.
 - Includes stack traces as PerfSample packets
 
 **Scxtop Status**: ⚠️ **Partial Support (Phase 9 in progress)**
+
 - TrackEvent parsing infrastructure added in scxtop
 - Full analyzer support coming soon
 - Can access sched_ext metadata once parsing is complete
 
 **Events Generated**:
+
 - `ONCPU` slices - Task on-CPU periods
 - `WAKER`/`WAKEE` instants - Wakeup relationships
 - `PREEMPTOR`/`PREEMPTEE` instants - Preemption tracking
@@ -90,6 +93,7 @@ is crucial for compatibility with scxtop.
 **Command**: `sudo ./wprof --emit-sched-view -o trace.proto`
 
 **Description**:
+
 - Uses standard Perfetto FtraceEvent bundles
 - Compatible with Perfetto UI's ftrace view
 - **Loses sched_ext metadata** (layer_id, dsq_id not in standard schema)
@@ -97,6 +101,7 @@ is crucial for compatibility with scxtop.
 - Loses compound delay information
 
 **Scxtop Status**:
+
 - All core analyzers work
 - CPU utilization, process runtime, wakeup latency, migrations
 - Scheduling bottleneck detection
@@ -104,6 +109,7 @@ is crucial for compatibility with scxtop.
 - Query framework
 
 **Events Generated**:
+
 - `sched_switch` - Context switch events
 - `sched_waking` - Task waking events
 - `sched_wakeup_new` - New task wakeups
@@ -154,6 +160,7 @@ sudo ./wprof --emit-sched-view -o trace.proto
 ```
 
 **Why**: All scxtop analyzers currently work with FtraceEvent format. You get:
+
 - CPU utilization analysis
 - Process runtime statistics
 - Wakeup latency measurements
@@ -216,6 +223,7 @@ sudo ./wprof --emit-sched-view -o trace.proto
 ### Idle Thread Handling
 
 Wprof uses a non-standard PID mapping for idle threads:
+
 - **Standard Perfetto**: swapper/N has TID 0
 - **Wprof**: swapper/N has TID -(N+1)
 
@@ -226,6 +234,7 @@ Wprof uses a non-standard PID mapping for idle threads:
 ### Timestamp Format
 
 Wprof timestamps are **relative to session start**:
+
 - All timestamps: `event_time - session_start_time`
 - Absolute timestamps not preserved
 
@@ -237,7 +246,7 @@ Wprof timestamps are **relative to session start**:
 
 In TrackEvent mode, sched-ext metadata is in debug_annotations:
 
-```
+```text
 debug_annotations: [
   { name: "scx_layer_id", value: UintValue(3) },
   { name: "scx_dsq_id", value: UintValue(10) },
@@ -260,7 +269,7 @@ let dsq_id = get_annotation_uint(&event.annotations, "scx_dsq_id");
 
 Perf counters are emitted as annotation deltas:
 
-```
+```text
 debug_annotations: [
   { name: "instructions", value: IntValue(1500000) },
   { name: "cycles", value: IntValue(3200000) },
@@ -387,6 +396,7 @@ sudo ./wprof -o scx_trace.proto sleep 10
 **Cause**: Trace not loaded or wrong trace_id.
 
 **Solution**:
+
 ```json
 {
   "tool": "load_perfetto_trace",
@@ -410,6 +420,7 @@ Use the exact `trace_id` returned from load in subsequent tools.
 **Cause**: Trace may not contain required event types.
 
 **Solution**:
+
 ```json
 {
   "tool": "get_trace_summary",
@@ -435,6 +446,7 @@ Based on testing with 900K+ event traces:
 | Query (100K events) | 1-15ms |
 
 **Recommendations**:
+
 - For interactive analysis: Use dedicated analyzer tools
 - For batch processing: Use `run_all_analyzers`
 - For large traces: Enable parallel processing where available
@@ -471,9 +483,9 @@ Based on testing with 900K+ event traces:
 ## Resources
 
 - **Scxtop Documentation**: See `PERFETTO_ANALYZER_GUIDE.md`
-- **Wprof Repository**: https://github.com/facebookexperimental/wprof
-- **Perfetto Documentation**: https://perfetto.dev/docs/
-- **Sched-ext**: https://github.com/sched-ext/scx
+- **Wprof Repository**: <https://github.com/facebookexperimental/wprof>
+- **Perfetto Documentation**: <https://perfetto.dev/docs/>
+- **Sched-ext**: <https://github.com/sched-ext/scx>
 
 ---
 

@@ -3,26 +3,29 @@
 ## Quick Links
 
 ### User Documentation
+
 - **[PERFETTO_TRACE_ANALYSIS.md](PERFETTO_TRACE_ANALYSIS.md)** - Complete guide to perfetto trace analysis
 - **[TASK_THREAD_DEBUGGING_GUIDE.md](TASK_THREAD_DEBUGGING_GUIDE.md)** - Task/thread debugging workflows
 - **[PROTOBUF_LOADING_VERIFIED.md](PROTOBUF_LOADING_VERIFIED.md)** - Protobuf file loading verification
 
 ### Main README
+
 - **[../README.md](../README.md)** - scxtop main documentation with MCP integration
 
 ### Implementation Documentation
+
 Located in `tools/scxtop/` root:
-- **[PERFETTO_MCP_IMPLEMENTATION.md](../PERFETTO_MCP_IMPLEMENTATION.md)**
-- **[EXTENDED_ANALYSIS_COMPLETE.md](../EXTENDED_ANALYSIS_COMPLETE.md)**
-- **[COMPLETE_IMPLEMENTATION_SUMMARY.md](../COMPLETE_IMPLEMENTATION_SUMMARY.md)**
+
+- (No additional implementation documents are currently tracked here.)
 
 ### MCP Integration
+
 - **[CLAUDE_INTEGRATION.md](../CLAUDE_INTEGRATION.md)** - Setting up Claude with scxtop MCP
 - **[MCP_INTEGRATIONS.md](../MCP_INTEGRATIONS.md)** - MCP protocol details
 
 ## Documentation Structure
 
-```
+```text
 tools/scxtop/
 ├── README.md                           # Main README
 ├── docs/                               # User documentation
@@ -45,6 +48,7 @@ tools/scxtop/
 ## Features Summary
 
 ### Analysis Types
+
 1. CPU Utilization
 2. Process Runtime
 3. Wakeup Latency
@@ -60,6 +64,7 @@ tools/scxtop/
 13. Wakeup→Schedule Correlation
 
 ### MCP Tools
+
 1. load_perfetto_trace - **Load protobuf files**
 2. query_trace_events
 3. analyze_trace_scheduling
